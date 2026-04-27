@@ -31,20 +31,24 @@ class device():
             raise
 
     def execCommand(self, commandIdx):
+        desc = self.remoteConfiguration.getDescription(commandIdx)
         try:
             cmd = self.remoteConfiguration.getCommand(commandIdx)
             expected = self.remoteConfiguration.getRule(commandIdx)
-            desc = self.remoteConfiguration.getDescription(commandIdx)
 
             _, stdout, _ = self.client.exec_command(cmd)
             result = stdout.read().decode(errors='replace').strip()
+            ok = result == expected
 
-            if result == expected:
+            if ok:
                 logger.info(" %s <span style='color: green;'>OK</span>  ", desc)
             else:
                 logger.error(" %s <span style='color: red;'>KO</span>  ", desc)
+
+            return {'description': desc, 'expected': expected, 'result': result, 'ok': ok}
         except Exception as e:
             logging.error("Command %d failed: %s", commandIdx, e)
+            return {'description': desc, 'expected': '', 'result': '', 'ok': False}
 
     def check(self):
         try:

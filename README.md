@@ -2,7 +2,7 @@
 
 A remote Linux security compliance auditing tool that checks whether a target system follows the [ANSSI](https://www.ssi.gouv.fr/) (French National Cybersecurity Agency) hardening recommendations.
 
-The tool connects to a remote host over SSH and runs 142 shell commands that validate kernel configuration, network settings, file system permissions, boot security, and more — each mapped to a specific ANSSI rule ID.
+The tool connects to a remote host over SSH and runs 142 shell commands that validate kernel configuration, network settings, file system permissions, boot security, and more — each mapped to a specific ANSSI rule ID. After the audit, it automatically generates a timestamped Markdown file and a color-coded PDF report.
 
 ---
 
@@ -21,6 +21,7 @@ pip install -r requirements.txt
 | Package | Purpose |
 |---------|---------|
 | `paramiko` | SSH connection and command execution |
+| `fpdf2` | PDF report generation |
 | `psycopg2-binary` | PostgreSQL storage *(optional, unused by default)* |
 | `pymongo` | MongoDB storage *(optional, unused by default)* |
 
@@ -62,7 +63,7 @@ Edit `configDevice.json` before running an audit.
 ## Usage
 
 ```bash
-python tester-ssh.py <username>
+python tester-ssh.py <username> [--out OUTPUT_DIR]
 ```
 
 The password is prompted securely (not shown, not saved in shell history).
@@ -73,6 +74,7 @@ The password is prompted securely (not shown, not saved in shell history).
 |----------|-------------|
 | `username` | SSH username for the target host |
 | `--password PASSWORD` | Pass the password directly (for scripted/automated runs only) |
+| `--out DIR` | Directory where reports are saved (default: `reports/`) |
 
 **Examples:**
 
@@ -80,31 +82,58 @@ The password is prompted securely (not shown, not saved in shell history).
 # Interactive — password prompted securely
 python tester-ssh.py ubuntu
 
+# Custom output directory
+python tester-ssh.py ubuntu --out /tmp/audit-results
+
 # Automated (CI/pipeline use)
-python tester-ssh.py ubuntu --password "$SSH_PASS"
+python tester-ssh.py ubuntu --password "$SSH_PASS" --out /tmp/audit-results
 ```
 
 ---
 
 ## Output
 
-Results are printed as a markdown table to stdout and as colored log lines to the terminal.
+### Terminal
 
-Each audit check reports either:
+Live results are printed as colored log lines during the audit.
+
+Each check reports either:
 
 - `OK` — the system output matches the expected ANSSI rule value
 - `KO` — the check failed (system is not compliant)
 
-Example output:
+### Generated reports
+
+After the audit completes, two files are written to the output directory:
 
 ```
-# Resultats AUDIT ANSSI
-Time: 2026-04-27 14:32:01
-
- recommended kernel configuration : configuration uefi recommandées | ANSII R1 | OK
- SecureBoot enabled                                                  | ANSII R2 | KO
- ...
+reports/
+├── audit_20260427_143201.md   ← Markdown table of all 142 checks
+└── audit_20260427_143201.pdf  ← Styled PDF with summary and color-coded results
 ```
+
+The file names are timestamped so successive audits never overwrite each other.
+
+**Markdown report** — a full results table:
+
+```markdown
+# AUDIT ANSSI — Security Compliance Report
+
+**Date:** 2026-04-27 14:32:01
+**Host:** 192.168.1.3
+**Total:** 142 | **Passed:** 89 | **Failed:** 53
+
+| # | Rule     | Description                                        | Status |
+|---|----------|----------------------------------------------------|--------|
+| 1 | ANSSI R1 | recommended kernel configuration : uefi            | ✅ OK  |
+| 2 | ANSSI R2 | SecureBoot enabled                                 | ❌ KO  |
+...
+```
+
+**PDF report** — same data in a printable format:
+- Header with host and generation timestamp
+- Summary line (total / passed / failed)
+- Color-coded table: green rows for OK, red rows for KO
 
 ---
 
@@ -145,6 +174,8 @@ AUDIT-ANSSI/
 │   └── readConfiguration.py   # JSON config parser
 ├── connectivity/
 │   └── device.py              # SSH session & command execution
+├── report/
+│   └── report.py              # Markdown and PDF report generation
 └── database/
     └── database.py            # PostgreSQL / MongoDB connectors (optional)
 ```
