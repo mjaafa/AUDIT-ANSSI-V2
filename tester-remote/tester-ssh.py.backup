@@ -1,0 +1,136 @@
+from pexpect import pxssh
+import logging
+from logging.config import fileConfig
+import json
+import pyjq
+import psycopg2
+from pymongo import MongoClient
+
+# package configuration
+fileConfig('log_conf.ini')
+logger = logging.getLogger()
+
+class readConfiguration():
+    data = [];
+    def __init__(self):
+        logging.debug("read configuration")
+        # read json file configuration
+        fileConfig = open('configDevice.json');
+        self.data = json.load(fileConfig);
+    def getStorageHost(self):
+        return ' '.join(pyjq.all(".device[0].storageDatabase[0].hostname", self.data))
+
+    def getStorageUser(self):
+        return ' '.join(pyjq.all(".device[0].storageDatabase[0].username", self.data))
+
+    def getStoragePassword(self):
+        return ' '.join(pyjq.all(".device[0].storageDatabase[0].password", self.data))
+
+    def getStorageDatabase(self):
+        return ' '.join(pyjq.all(".device[0].storageDatabase[0].database", self.data))
+
+    def getHostname(self):
+        return ' '.join(pyjq.all(".device[0].configuration[0].hostname",self.data))
+
+    def getUsername(self):
+        return ' '.join(pyjq.all(".device[0].configuration[0].username",self.data))
+
+    def getPassword(self):
+        return ' '.join(pyjq.all(".device[0].configuration[0].password",self.data))
+
+    def getCommands(self):
+        return pyjq.all(".device[0].commands",self.data)
+
+    def getnumberOfCommands(self):
+        #return pyjq.all(".device[0].numberOfCommands",self.data)
+        return ' '.join(pyjq.all(".device[0].numberOfCommands",self.data))
+
+    def getCommand(self, index):
+        retrieve = ".device[0].commands["+str(index)+"].command"
+        return ' '.join(pyjq.all(retrieve,self.data))
+
+    def getDescription(self, index):
+        retrieve = ".device[0].commands["+str(index)+"].Description"
+        return ' '.join(pyjq.all(retrieve,self.data))
+
+
+class mongoDb():
+    def __init__(self, configuration):
+        self.client = MongoClient(configuration.getStorageHost(),
+                                  user=configuration.getStorageUser(),
+                                  password=configuration.getStoragePassword(),
+                                  authMechanism='PLAIN')
+
+    def createDatabases(self):
+        try :
+            self.database = self.client["devices"]
+            self.collection = self.database["CPE"]
+
+        except Exception as e :
+            logger.error("Create database")
+
+    def insertElement(self, database, element):
+        try :
+            self.collection.insert_one[element]
+        except Exception as e :
+            logger.error("Insert element fails")
+
+class device ():
+    def __init__(self):
+        self.remoteConfiguration = readConfiguration()
+        self.session = pxssh.pxssh()
+    
+    def connect(self):
+        logging.debug("Connecting to device... %s", self.remoteConfiguration.getHostname())
+        try:
+            self.session.login(self.remoteConfiguration.getHostname(),
+                               self.remoteConfiguration.getUsername(),
+                               self.remoteConfiguration.getPassword())
+        except Exception:
+            logging.error("Could not connect to device")
+
+    def check(self):
+        #self.database = mongoDb(project.getConfigurations())
+        #self.database = store(project.getConfigurations())
+        try:
+            logging.debug("SSH session login successful number of commands : %d",int(self.remoteConfiguration.getnumberOfCommands()))
+            for commandIdx in range(int(self.remoteConfiguration.getnumberOfCommands())):
+                logger.debug(">>> %s", self.remoteConfiguration.getCommand(commandIdx))
+                self.session.sendline (self.remoteConfiguration.getCommand(commandIdx))
+                self.session.prompt()
+                #logger.debug("%s", self.session.before.decode().splitlines(0)[2])
+                #logger.debug("%s", self.session.before.decode().splitlines(0)[2:])
+                element="{\""+self.remoteConfiguration.getDescription(commandIdx)+"\":\""+str(self.session.before.decode()).splitlines(0)[2]+"\"}"
+                logger.debug("%s", element)
+                #:mongoDb.insertElement(element)
+
+        except Exception:
+                logging.error("Could not connect to device")
+    
+    def getConfigurations(self):
+        return self.remoteConfiguration
+    
+    def disconnect(self): 
+        logger.info("Disconnecting")
+        self.session.logout()
+
+class store():
+    def __init__(self, configuration):
+        logging.info("Connecting to database")
+        self.connection = psycopg2.connect( host=configuration.getStorageHost(),
+                                            user=configuration.getStorageUser(),
+                                            password=configuration.getStoragePassword())
+        
+        try :
+            self.connection.cursor().execute('SELECT version()')
+            logging.debug('PostgreSQL database version:', self.connection.cursor().fetchone())
+        except Exception as e :
+            logging.error('PostgreSQL database : no version %s ',e );
+
+project = device()
+
+project.connect()
+project.check()
+project.disconnect()
+
+#database = store(project.getConfigurations())

@@ -1,0 +1,55 @@
+{
+    "device" : [
+        {
+            "Name":"project",
+            "storageDatabase":[
+                {
+                    "hostname":"192.168.1.58",
+                    "username":"postgres",
+                    "password":"password",
+                    "database":"configDevice"
+                }
+            ],
+            "configuration":[
+                {
+                    "hostname"  :"192.168.45.200",
+                    "username"  :"root",
+                    "password"  :"elynxo" 
+                }
+            ],
+            "numberOfCommands":"5",
+            "commands":[
+                {
+                    "command":"cat /proc/mounts |grep mmcblk",
+                    "Description": "mount system",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "Description": "Virtuose about",
+                    "command":"/opt1/VirtuoseApp/bin/VirtuoseApp --about",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"/opt1/VirtuoseApp/bin/VirtuoseApp",
+                    "Description": "execute VirtuoseApp command",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"df -h | grep -v Filesystem |awk 'NR=3'",
+                    "Description": "disk",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"ifconfig |grep mtu |cut -d ':' -f1|awk 'NR==18'",
+                    "Description": "wifi Network Interface",
+                    "dialog":"No",
+                    "Store":"info"
+                }
+            ]
+        }
+    ]
+}

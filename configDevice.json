@@ -1,0 +1,1013 @@
+{
+    "device" : [
+        {
+            "Name":"project",
+            "storageDatabase":[
+                {
+                    "hostname":"192.168.1.3",
+                    "username":"postgres",
+                    "password":"password",
+                    "database":"configDevice"
+                }
+            ],
+            "configuration":[
+                {
+                    "hostname"  :"192.168.1.3",
+                    "username"  :"ubuntu",
+                    "password"  :"ubuntu" 
+                }
+            ],
+            "numberOfCommands":"142",
+            "commands":[
+                {
+                    "command":"if [ -d /sys/firmware/efi ]; then echo \"using uefi\"; else echo \"using bios\"; fi;",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R1 |",
+                    "rule":"using uefi",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "_comment" : "SecureBoot enabled : if [ \"$(mokutil --sb-state)\" == \"SecureBoot enabled\" ]; then echo \"uefi secured\"; else echo \"uefi not secured\";fi;"  ,
+                    "command":"if [ \"$(mokutil --sb-state)\" == \"SecureBoot disabled\" ]; then echo \"uefi not secured\"; else echo \"uefi secured\";fi;",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R2 |",
+                    "rule":"uefi secured",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -z \"$(dmesg | grep -i \"EFI v\")\" ]; then echo \"booted using uefi\";fi",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R3 |",
+                    "rule":"booted using uefi",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ \"$(date +%s)\" -lt \"$(date -d \"$(mokutil --list-enrolled | grep \" Not After \" | cut -d ' ' -f16-)\" +%s)\" ]; then echo \"up to date keys\"; else echo \"outdated keys\";fi;",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R4 |",
+                    "rule":"up to date keys",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -z $(cat /boot/grub/grub.cfg |grep pass) ]; then echo \"grub protected\"; fi;",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R5 |",
+                    "rule":"grub protected",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"cmdline=$(cat /proc/cmdline); if [[ $cmdline = *'iommu'* ]]; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.dmesg_restrict",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.1 |",
+                    "rule":"kernel.dmesg_restrict = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.kptr_restrict",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.2 |",
+                    "rule":"kernel.kptr_restrict = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.pid_max",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.3 |",
+                    "rule":"kernel.pid_max = 65536",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.perf_cpu_time_max_percent",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.4 |",
+                    "rule":"kernel.perf_cpu_time_max_percent = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.perf_event_max_sample_rate",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.5 |",
+                    "rule":"kernel.perf_event_max_sample_rate = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },                
+                {
+                    "command":"sysctl kernel.perf_event_paranoid",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.6 |",
+                    "rule":"kernel.perf_event_paranoid = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },                
+                {
+                    "command":"sysctl kernel.randomize_va_space",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.7 |",
+                    "rule":"kernel.randomize_va_space = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"sysctl kernel.sysrq",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.8 |",
+                    "rule":"kernel.sysrq = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.unprivileged_bpf_disabled",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.9 |",
+                    "rule":"kernel.unprivileged_bpf_disabled = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+                {
+                    "command":"sysctl kernel.panic_on_oops",
+                    "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.10 |",
+                    "rule":"kernel.panic_on_oops = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.modules_disabled",
+                    "Description": " recommended kernel configuration : Désactiver le chargement des modules noyau | ANSII R10 |",
+                    "rule":"kernel.modules_disabled = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"cmdline=$(cat /proc/cmdline); if [[ $cmdline = *'yama'* ]]; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Description": " recommended kernel configuration : Activer et configurer le LSM Yama | ANSII R11.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl kernel.yama.ptrace_scope",
+                    "Description": " recommended kernel configuration : Activer et configurer le LSM Yama | ANSII R11.2 |",
+                    "rule":"kernel.yama.ptrace_scope = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+               {
+                    "command":"sysctl net.core.bpf_jit_harden",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.1 |",
+                    "rule":"net.core.bpf_jit_harden = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+               {
+                    "command":"sysctl net.ipv4.ip_forward",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.2 |",
+                    "rule":"net.ipv4.ip_forward = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+               {
+                    "command":"sysctl net.ipv4.conf.all.accept_local",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.3 |",
+                    "rule":"net.ipv4.conf.all.accept_local = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                
+               {
+                    "command":"sysctl net.ipv4.conf.all.accept_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.4 |",
+                    "rule":"net.ipv4.conf.all.accept_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"sysctl net.ipv4.conf.default.accept_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.5 |",
+                    "rule":"net.ipv4.conf.default.accept_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+               {
+                    "command":"sysctl net.ipv4.conf.all.secure_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.6 |",
+                    "rule":"net.ipv4.conf.all.secure_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+               {
+                    "command":"sysctl net.ipv4.conf.default.secure_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.7 |",
+                    "rule":"net.ipv4.conf.default.secure_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+               {
+                    "command":"sysctl net.ipv4.conf.all.shared_media",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.8 |",
+                    "rule":"net.ipv4.conf.all.shared_media = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                                                                                                      
+               {
+                    "command":"sysctl net.ipv4.conf.default.shared_media",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.9 |",
+                    "rule":"net.ipv4.conf.default.shared_media = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+               {
+                    "command":"sysctl net.ipv4.conf.all.accept_source_route",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.10 |",
+                    "rule":"net.ipv4.conf.all.accept_source_route = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                                                                                                      
+               {
+                    "command":"sysctl net.ipv4.conf.default.accept_source_route",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.11 |",
+                    "rule":"net.ipv4.conf.default.accept_source_route = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+              {
+                    "command":"sysctl net.ipv4.conf.all.accept_source_route",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.12 |",
+                    "rule":"net.ipv4.conf.all.accept_source_route = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                                                                                                      
+               {
+                    "command":"sysctl net.ipv4.conf.default.accept_source_route",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.13 |",
+                    "rule":"net.ipv4.conf.default.accept_source_route = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+              {
+                    "command":"sysctl net.ipv4.conf.all.arp_filter",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.14 |",
+                    "rule":"net.ipv4.conf.all.arp_filter = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },   
+              {
+                    "command":"sysctl net.ipv4.conf.all.arp_ignore",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.15 |",
+                    "rule":"net.ipv4.conf.all.arp_ignore = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },    
+              {
+                    "command":"sysctl net.ipv4.conf.all.route_localnet",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.16 |",
+                    "rule":"net.ipv4.conf.all.route_localnet = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+              {
+                    "command":"sysctl net.ipv4.conf.all.drop_gratuitous_arp",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.17 |",
+                    "rule":"net.ipv4.conf.all.drop_gratuitous_arp = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+               {
+                    "command":"sysctl net.ipv4.conf.default.rp_filter",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.18 |",
+                    "rule":"net.ipv4.conf.default.rp_filter = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+              {
+                    "command":"sysctl net.ipv4.conf.all.rp_filter",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.19 |",
+                    "rule":"net.ipv4.conf.all.rp_filter = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+               {
+                    "command":"sysctl net.ipv4.conf.default.send_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.20 |",
+                    "rule":"net.ipv4.conf.default.send_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+              {
+                    "command":"sysctl net.ipv4.conf.all.send_redirects",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.21 |",
+                    "rule":"net.ipv4.conf.all.send_redirects = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },     
+              {
+                    "command":"sysctl net.ipv4.icmp_ignore_bogus_error_responses",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.22 |",
+                    "rule":"net.ipv4.conf.all.icmp_ignore_bogus_error_responses = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+              {
+                    "command":"sysctl net.ipv4.ip_local_port_range",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.23 |",
+                    "rule":"net.ipv4.conf.all.ip_local_port_range = 32768 65535",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+              {
+                    "command":"sysctl net.ipv4.tcp_rfc1337",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.24 |",
+                    "rule":"net.ipv4.conf.all.tcp_rfc1337 = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+              {
+                    "command":"sysctl net.ipv4.tcp_syncookies",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.25 |",
+                    "rule":"net.ipv4.conf.all.tcp_syncookies = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+{
+                    "command":"sysctl net.ipv6.conf.default.disable_ipv6",
+                    "Description": " recommended kernel configuration : Désactiver le plan IPv6 | ANSII R13.1 |",
+                    "rule":"net.ipv6.conf.default.disable_ipv6 = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+{
+                    "command":"sysctl net.ipv6.conf.all.disable_ipv6",
+                    "Description": " recommended kernel configuration : Désactiver le plan IPv6 | ANSII R13.2 |",
+                    "rule":"net.ipv6.conf.all.disable_ipv6 = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+		{
+                    "command":"sysctl fs.suid_dumpable",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes des fichiers | ANSII R14.1 |",
+                    "rule":"fs.suid_dumpable = 0",
+                    "dialog":"No",
+                    "Store":"info"
+                },               
+		{
+                    "command":"sysctl fs.protected_fifos",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes | ANSII R14.2 |",
+                    "rule":"fs.protected_fifos = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+		{
+                    "command":"sysctl fs.protected_regular",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes | ANSII R14.3 |",
+                    "rule":"fs.protected_regular = 2",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+		{
+                    "command":"sysctl fs.protected_symlinks",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes | ANSII R14.4 |",
+                    "rule":"fs.protected_symlinks = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                
+                {
+                    "command":"sysctl fs.protected_hardinks",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes | ANSII R14.5 |",
+                    "rule":"fs.protected_hardinks = 1",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r) |grep -E \"CONFIG_STRICT_KERNEL_RWX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_ARCH_OPTIONAL_KERNEL_RWX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                      
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_WX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_FS=n\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_STACKPROTECTOR=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_STACKPROTECTOR_STRONG=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEVMEM is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.8 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SCHED_STACK_END_CHECK=y\") ]; then echo \"found\" ;fi;",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.9 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_HARDENED_USERCOPY=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.10 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_HARDENED_USERCOPY_FALLBACK is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.11 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_VMAP_STACK=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.12 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_REFCOUNT_FULL=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.13 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                                                                             
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_FORTIFY_SOURCE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.14 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_ACPI_CUSTOM_METHOD is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.15 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEVKMEM is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.16 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PROC_KCORE is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.17 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_COMPAT_VDSO is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.18 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECURITY_DMESG_RESTRICT=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.19 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_RETPOLINE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.20 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_LEGACY_VSYSCALL_NONE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.21 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_LEGACY_VSYSCALL_EMULATE=n\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.22 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_LEGACY_VSYSCALL_XONLY=n\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.23 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+                {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_X86_VSYSCALL_EMULATION=n\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.24 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_CREDENTIALS=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_NOTIFIERS=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },            
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_LIST=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEBUG_SG=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_BUG_ON_DATA_CORRUPTION=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },   
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SLAB_FREELIST_RANDOM=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SLUB=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SLAB_FREELIST_HARDENED=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SLAB_MERGE_DEFAULT=n\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SLUB_DEBUG=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire  | ANSII R17.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PAGE_POISONING=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PAGE_POISONING_NO_SANITY=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PAGE_POISONING_ZERO=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.8 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_COMPAT_BRK is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.9 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULES=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_STRICT_MODULE_RWX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG_FORCE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG_ALL=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG_SHA512=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG_HASH =\" sha512\"\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULE_SIG_KEY =\" certs/signing_key.pem\"\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.8 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_BUG=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PANIC_ON_OOPS=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration :  Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PANIC_TIMEOUT=-1\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration :  Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECCOMP=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau| ANSII R20.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECCOMP_FILTER=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECURITY=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECURITY_YAMA=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SECURITY_WRITABLE_HOOKS is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_IPV6 option set.\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la pile réseau | ANSII R22.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+             {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_SYN_COOKIES=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la pile réseau | ANSII R22.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_KEXEC is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau| ANSII R23.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },    
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_HIBERNATION is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_HIBERNATION is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_LEGACY_PTYS is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODULES is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_HIGHMEM64G=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits| ANSII R24.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },    
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_X86_PAE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEFAULT_MMAP_MIN_ADDR =65536\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_RANDOMIZE_BASE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_X86_64=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },       
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEFAULT_MMAP_MIN_ADDR =65536\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_RANDOMIZE_BASE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_RANDOMIZE_MEMORY=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_PAGE_TABLE_ISOLATION=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_IA32_EMULATION is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_MODIFY_LDT_SYSCALL is not set\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEFAULT_MMAP_MIN_ADDR =32768\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_VMSPLIT_3G=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_STRICT_MEMORY_RWX=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_CPU_SW_DOMAIN_PAN=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                }, 
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_OABI_COMPAT is unset\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_DEFAULT_MMAP_MIN_ADDR =32768\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },  
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_RANDOMIZE_BASE=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_ARM64_SW_TTBR0_PAN=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+            {
+                    "command":"if [ $(cat /boot/config-$(uname -r)|grep -E \"CONFIG_UNMAP_KERNEL_AT_EL0=y\") ]; then echo \"found\" ;fi;",
+                    "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"for filer in $(find / 2> /dev/null); do ls -rtlh $filer 2> /dev/null | awk '{ print $3}' |grep -E \"nobody|[0-9]\";done",
+                    "Description": "recommended kernel configuration : Éviter les fichiers ou répertoires sans utilisateur ou sans groupe connu | ANSII R53.1 |",
+                    "rule":"",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"for filer in $(find / 2> /dev/null); do ls -rtlh $filer 2> /dev/null | awk '{ print $4}' |grep -E \"nobody|[0-9]\";done",
+                    "Description": "recommended kernel configuration : Éviter les fichiers ou répertoires sans utilisateur ou sans groupe connu | ANSII R53.2 |",
+                    "rule":"",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [[ $(ls -rtlh | awk '{ print $3}') != \"root\" ]]; then for filer in $(find / 2> /dev/null ); do if [[ $(ls -ld 2> /dev/null | awk '{print $1}' | grep -E \"t$|T$\") != \"\" ]]; then echo \"vulnerable\"; fi;done;fi;",
+                    "Description": "recommended kernel configuration : Activer le sticky bit sur les répertoires inscriptibles | ANSII R54 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(find / -type f -perm /6000 -print 2> /dev/null |head -n1) != \"\" ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Description": "recommended kernel configuration : Éviter l'usage d'exécutables avec les droits spéciaux setuid et setgid | ANSII R56 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [[ $(find / -name \"apt\" 2> /dev/null|head -n1) != \"\" ]]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Description": "recommended kernel configuration : N'installer que les paquets strictement nécessaires | ANSII R58 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ $(grep deb  -rni /etc/apt/ | head -n 1 |cut -d ' ' -f1) != \"\" ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Description": "recommended kernel configuration : Utiliser des dépôts de paquets de confiance | ANSII R59 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"delta=$(( $(date -d \"$(date +\"%Y-%m-%d\")\" +\"%s\")  - $(date --date=$(cat /var/os-version |grep Date | cut -d ':' -f2|cut -d ' ' -f2) +\"%s\") )); if [ $delta -gt 2073700 ]; then echo \"vulnerable version needs update\"; else echo \"robust update\"; fi;",
+                    "Description": "recommended kernel configuration : Effectuer des mises à jour régulières | ANSII R61 |",
+                    "rule":"robust update",
+                    "dialog":"No",
+                    "Store":"info"
+                },               
+                {
+                    "command":"if [ $(systemctl |grep -E \"rpc|nfs|portmap|statd|rpcbind|zeroconf|dhcp\" | head -n1 |cut -d ' ' -f3) != \"\" ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Description": "recommended kernel configuration : Désactiver les services non nécessaires | ANSII R62 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },               
+                {
+                    "command":"if [[ \"$(cat /etc/pam.d/common-password |grep pam_unix |grep sha512)\" = *'rounds =65536'* ]]; then echo \"robust\"; else echo \"vulnerable\"; fi;",
+                    "Description": "recommended kernel configuration : Désactiver les fonctionnalités des services non essentielles | ANSII R63 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+             ]
+        }
+    ]
+}
