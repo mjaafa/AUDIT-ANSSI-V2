@@ -17,7 +17,7 @@
                     "password"  :"ubuntu" 
                 }
             ],
-            "numberOfCommands":"142",
+            "numberOfCommands":"17",
             "commands":[
                 {
                     "command":"if [ -d /sys/firmware/efi ]; then echo \"using uefi\"; else echo \"using bios\"; fi;",
@@ -944,41 +944,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-                {
-                    "command":"for filer in $(find / 2> /dev/null); do ls -rtlh $filer 2> /dev/null | awk '{ print $3}' |grep -E \"nobody|[0-9]\";done",
-                    "Description": "recommended kernel configuration : Éviter les fichiers ou répertoires sans utilisateur ou sans groupe connu | ANSII R53.1 |",
-                    "rule":"",
-                    "dialog":"No",
-                    "Store":"info"
-                },
-                {
-                    "command":"for filer in $(find / 2> /dev/null); do ls -rtlh $filer 2> /dev/null | awk '{ print $4}' |grep -E \"nobody|[0-9]\";done",
-                    "Description": "recommended kernel configuration : Éviter les fichiers ou répertoires sans utilisateur ou sans groupe connu | ANSII R53.2 |",
-                    "rule":"",
-                    "dialog":"No",
-                    "Store":"info"
-                },
-                {
-                    "command":"if [[ $(ls -rtlh | awk '{ print $3}') != \"root\" ]]; then for filer in $(find / 2> /dev/null ); do if [[ $(ls -ld 2> /dev/null | awk '{print $1}' | grep -E \"t$|T$\") != \"\" ]]; then echo \"vulnerable\"; fi;done;fi;",
-                    "Description": "recommended kernel configuration : Activer le sticky bit sur les répertoires inscriptibles | ANSII R54 |",
-                    "rule":"robust",
-                    "dialog":"No",
-                    "Store":"info"
-                },
-                {
-                    "command":"if [ $(find / -type f -perm /6000 -print 2> /dev/null |head -n1) != \"\" ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
-                    "Description": "recommended kernel configuration : Éviter l'usage d'exécutables avec les droits spéciaux setuid et setgid | ANSII R56 |",
-                    "rule":"robust",
-                    "dialog":"No",
-                    "Store":"info"
-                },
-                {
-                    "command":"if [[ $(find / -name \"apt\" 2> /dev/null|head -n1) != \"\" ]]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
-                    "Description": "recommended kernel configuration : N'installer que les paquets strictement nécessaires | ANSII R58 |",
-                    "rule":"robust",
-                    "dialog":"No",
-                    "Store":"info"
-                },
+                
                 {
                     "command":"if [ $(grep deb  -rni /etc/apt/ | head -n 1 |cut -d ' ' -f1) != \"\" ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
                     "Description": "recommended kernel configuration : Utiliser des dépôts de paquets de confiance | ANSII R59 |",

@@ -46,7 +46,7 @@ class readConfiguration():
         return self._commands
 
     def getnumberOfCommands(self):
-        return int(self._device['numberOfCommands'])
+        return len(self._commands)
 
     def getCommand(self, index):
         return self._commands[index]['command']

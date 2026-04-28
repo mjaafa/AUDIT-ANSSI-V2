@@ -4,11 +4,15 @@ from fpdf import FPDF
 
 
 def _parse_desc(raw):
-    """Split 'label | ANSSI Rxx |' into (label, rule_id)."""
     parts = [p.strip() for p in raw.split('|')]
     label = parts[0].strip() if parts else raw.strip()
     rule = parts[1].strip() if len(parts) > 1 else ''
     return label, rule
+
+
+def _pdf_safe(text):
+    """Drop characters outside latin-1 so Helvetica never raises."""
+    return text.encode('latin-1', errors='ignore').decode('latin-1')
 
 
 class _AuditPDF(FPDF):
@@ -19,7 +23,7 @@ class _AuditPDF(FPDF):
 
     def header(self):
         self.set_font("Helvetica", "B", 14)
-        self.cell(0, 10, "AUDIT ANSSI — Security Compliance Report",
+        self.cell(0, 10, "AUDIT ANSSI - Security Compliance Report",
                   align="C", new_x="LMARGIN", new_y="NEXT")
         self.set_font("Helvetica", "", 9)
         self.cell(0, 6, f"Host: {self._hostname}    Generated: {self._generated_at}",
@@ -53,7 +57,7 @@ def _build_md(results, hostname, now):
     passed = sum(1 for r in results if r['ok'])
     failed = len(results) - passed
     lines = [
-        "# AUDIT ANSSI — Security Compliance Report",
+        "# AUDIT ANSSI - Security Compliance Report",
         "",
         f"**Date:** {now.strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Host:** {hostname}  ",
@@ -66,7 +70,7 @@ def _build_md(results, hostname, now):
     ]
     for i, r in enumerate(results, 1):
         label, rule = _parse_desc(r['description'])
-        status = "✅ OK" if r['ok'] else "❌ KO"
+        status = "OK" if r['ok'] else "KO"
         lines.append(f"| {i} | {rule} | {label} | {status} |")
     return "\n".join(lines) + "\n"
 
@@ -83,7 +87,7 @@ def _build_pdf(results, hostname, now, out_path):
     # Summary line
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 8,
-             f"Summary: {len(results)} checks — {passed} passed, {failed} failed",
+             f"Summary: {len(results)} checks - {passed} passed, {failed} failed",
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 
@@ -112,8 +116,8 @@ def _build_pdf(results, hostname, now, out_path):
 
         pdf.set_text_color(0, 0, 0)
         pdf.cell(COL[0], ROW_H, str(i), border=1, fill=True, align="R")
-        pdf.cell(COL[1], ROW_H, rule[:24], border=1, fill=True)
-        pdf.cell(COL[2], ROW_H, label[:75], border=1, fill=True)
+        pdf.cell(COL[1], ROW_H, _pdf_safe(rule[:24]), border=1, fill=True)
+        pdf.cell(COL[2], ROW_H, _pdf_safe(label[:75]), border=1, fill=True)
 
         if r['ok']:
             pdf.set_text_color(0, 130, 0)
