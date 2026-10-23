@@ -4,15 +4,41 @@ from fpdf import FPDF
 
 
 def _parse_desc(raw):
+    """Split 'title : label | rule |' into (title, label, rule)."""
     parts = [p.strip() for p in raw.split('|')]
-    label = parts[0].strip() if parts else raw.strip()
-    rule = parts[1].strip() if len(parts) > 1 else ''
-    return label, rule
+    text = parts[0] if parts else raw.strip()
+    rule = parts[1] if len(parts) > 1 else ''
+    title, sep, label = text.partition(':')
+    if not sep:
+        return '', text, rule
+    return title.strip(), label.strip(), rule
+
+
+def _group_by_title(results):
+    """Yield (title, [(index, name, label, rule, ok), ...]) keeping test order."""
+    groups = []
+    for i, r in enumerate(results, 1):
+        title, label, rule = _parse_desc(r['description'])
+        if not groups or groups[-1][0] != title:
+            groups.append((title, []))
+        groups[-1][1].append((i, r.get('name', ''), label, rule, r['ok']))
+    return groups
 
 
 def _pdf_safe(text):
     """Drop characters outside latin-1 so Helvetica never raises."""
     return text.encode('latin-1', errors='ignore').decode('latin-1')
+
+
+def _fit(pdf, text, width):
+    """Truncate text with '...' so it fits in a cell of the given width."""
+    text = _pdf_safe(text)
+    max_w = width - 2 * pdf.c_margin
+    if pdf.get_string_width(text) <= max_w:
+        return text
+    while text and pdf.get_string_width(text + "...") > max_w:
+        text = text[:-1]
+    return text + "..."
 
 
 class _AuditPDF(FPDF):
@@ -23,11 +49,12 @@ class _AuditPDF(FPDF):
 
     def header(self):
         self.set_font("Helvetica", "B", 14)
-        self.cell(0, 10, "AUDIT ANSSI - Security Compliance Report",
-                  align="C", new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 10, "AUDIT ANSSI - Security Compliance Report", align="C")
+        self.ln(10)
         self.set_font("Helvetica", "", 9)
         self.cell(0, 6, f"Host: {self._hostname}    Generated: {self._generated_at}",
-                  align="C", new_x="LMARGIN", new_y="NEXT")
+                  align="C")
+        self.ln(6)
         self.ln(4)
 
     def footer(self):
@@ -64,14 +91,18 @@ def _build_md(results, hostname, now):
         f"**Total:** {len(results)} | **Passed:** {passed} | **Failed:** {failed}",
         "",
         "---",
-        "",
-        "| # | Rule | Description | Status |",
-        "|---|------|-------------|--------|",
     ]
-    for i, r in enumerate(results, 1):
-        label, rule = _parse_desc(r['description'])
-        status = "OK" if r['ok'] else "KO"
-        lines.append(f"| {i} | {rule} | {label} | {status} |")
+    for title, rows in _group_by_title(results):
+        lines += [
+            "",
+            f"## {title or 'Other tests'}",
+            "",
+            "| # | Rule | Test | Description | Status |",
+            "|---|------|------|-------------|--------|",
+        ]
+        for i, name, label, rule, ok in rows:
+            status = "OK" if ok else "KO"
+            lines.append(f"| {i} | {rule} | {name} | {label} | {status} |")
     return "\n".join(lines) + "\n"
 
 
@@ -87,44 +118,56 @@ def _build_pdf(results, hostname, now, out_path):
     # Summary line
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 8,
-             f"Summary: {len(results)} checks - {passed} passed, {failed} failed",
-             new_x="LMARGIN", new_y="NEXT")
+             f"Summary: {len(results)} checks - {passed} passed, {failed} failed")
+    pdf.ln(8)
     pdf.ln(3)
 
     # Column widths (page width ~190 mm with default margins)
-    COL = [10, 28, 134, 18]
+    COL = [10, 22, 70, 72, 16]
     ROW_H = 6
 
-    # Header row
-    pdf.set_fill_color(50, 50, 50)
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 9)
-    for w, label in zip(COL, ["#", "Rule", "Description", "Status"]):
-        pdf.cell(w, ROW_H, label, border=1, fill=True, align="C")
-    pdf.ln()
+    for title, rows in _group_by_title(results):
+        # Keep the section title on the same page as its first rows
+        if pdf.get_y() + 10 + 3 * ROW_H > pdf.h - pdf.b_margin:
+            pdf.add_page()
 
-    # Data rows
-    pdf.set_font("Helvetica", "", 8)
-    for i, r in enumerate(results, 1):
-        label, rule = _parse_desc(r['description'])
-        status = "OK" if r['ok'] else "KO"
-
-        if r['ok']:
-            pdf.set_fill_color(232, 255, 232)
-        else:
-            pdf.set_fill_color(255, 232, 232)
-
+        # Section title
         pdf.set_text_color(0, 0, 0)
-        pdf.cell(COL[0], ROW_H, str(i), border=1, fill=True, align="R")
-        pdf.cell(COL[1], ROW_H, _pdf_safe(rule[:24]), border=1, fill=True)
-        pdf.cell(COL[2], ROW_H, _pdf_safe(label[:75]), border=1, fill=True)
+        pdf.set_font("Helvetica", "B", 12)
+        pdf.cell(0, 8, _pdf_safe(title or "Other tests"))
+        pdf.ln(9)
 
-        if r['ok']:
-            pdf.set_text_color(0, 130, 0)
-        else:
-            pdf.set_text_color(180, 0, 0)
-        pdf.cell(COL[3], ROW_H, status, border=1, fill=True, align="C")
-        pdf.set_text_color(0, 0, 0)
+        # Header row
+        pdf.set_fill_color(50, 50, 50)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Helvetica", "B", 9)
+        for w, label in zip(COL, ["#", "Rule", "Test", "Description", "Status"]):
+            pdf.cell(w, ROW_H, label, border=1, fill=True, align="C")
         pdf.ln()
+
+        # Data rows
+        pdf.set_font("Helvetica", "", 8)
+        for i, name, label, rule, ok in rows:
+            status = "OK" if ok else "KO"
+
+            if ok:
+                pdf.set_fill_color(232, 255, 232)
+            else:
+                pdf.set_fill_color(255, 232, 232)
+
+            pdf.set_text_color(0, 0, 0)
+            pdf.cell(COL[0], ROW_H, str(i), border=1, fill=True, align="R")
+            pdf.cell(COL[1], ROW_H, _fit(pdf, rule, COL[1]), border=1, fill=True)
+            pdf.cell(COL[2], ROW_H, _fit(pdf, name, COL[2]), border=1, fill=True)
+            pdf.cell(COL[3], ROW_H, _fit(pdf, label, COL[3]), border=1, fill=True)
+
+            if ok:
+                pdf.set_text_color(0, 130, 0)
+            else:
+                pdf.set_text_color(180, 0, 0)
+            pdf.cell(COL[4], ROW_H, status, border=1, fill=True, align="C")
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln()
+        pdf.ln(4)
 
     pdf.output(out_path)

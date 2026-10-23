@@ -42,6 +42,15 @@ class readConfiguration():
     def getPassword(self):
         return self._device['configuration'][0]['password']
 
+    def getPort(self):
+        return int(self._device['configuration'][0].get('port', 22))
+
+    def getKeyFile(self):
+        return self._device['configuration'][0].get('key_filename')
+
+    def getCertificate(self):
+        return self._device['configuration'][0].get('certificate')
+
     def getCommands(self):
         return self._commands
 
@@ -50,6 +59,9 @@ class readConfiguration():
 
     def getCommand(self, index):
         return self._commands[index]['command']
+
+    def getName(self, index):
+        return self._commands[index].get('Name', '')
 
     def getDescription(self, index):
         return self._commands[index]['Description']

@@ -2,7 +2,7 @@
 
 A remote Linux security compliance auditing tool that checks whether a target system follows the [ANSSI](https://www.ssi.gouv.fr/) (French National Cybersecurity Agency) hardening recommendations.
 
-The tool connects to a remote host over SSH and runs 142 shell commands that validate kernel configuration, network settings, file system permissions, boot security, and more — each mapped to a specific ANSSI rule ID. After the audit, it automatically generates a timestamped Markdown file and a color-coded PDF report.
+The tool connects to a remote host over SSH and runs 134 shell commands that validate kernel configuration, network settings, file system permissions, boot security, and more — each mapped to a specific ANSSI rule ID. After the audit, it automatically generates a timestamped Markdown file and a color-coded PDF report.
 
 ---
 
@@ -39,10 +39,13 @@ Edit `configDevice.json` before running an audit.
         {
           "hostname": "192.168.1.3",
           "username": "ubuntu",
-          "password": "ubuntu"
+          "password": "ubuntu",
+          "port": "22",
+          "key_filename": "~/.ssh/id_ed25519",
+          "certificate": "~/.ssh/id_ed25519-cert.pub"
         }
       ],
-      "numberOfCommands": "142",
+      "numberOfCommands": "134",
       "commands": [ ... ]
     }
   ]
@@ -54,6 +57,9 @@ Edit `configDevice.json` before running an audit.
 | `hostname` | IP address or hostname of the target machine |
 | `username` | SSH username (must have sudo rights) |
 | `password` | SSH password — stored here only for reference; the CLI prompts for it securely at runtime |
+| `port` | SSH port *(optional, default `22`)* |
+| `key_filename` | Private key for public-key authentication *(optional; when set, no password is prompted)* |
+| `certificate` | OpenSSH certificate (`*-cert.pub`) signed for `key_filename` *(optional)* |
 | `numberOfCommands` | Total number of audit commands (must match the length of `commands`) |
 
 > **Security note**: Avoid committing real credentials into version control. The password in the config file is used only when passing `--json` mode; the default interactive mode prompts securely via `getpass`.
@@ -63,10 +69,10 @@ Edit `configDevice.json` before running an audit.
 ## Usage
 
 ```bash
-python tester-ssh.py <username> [--out OUTPUT_DIR]
+python tester-ssh.py <username> [--port PORT] [--key KEY [--cert CERT]] [--out OUTPUT_DIR]
 ```
 
-The password is prompted securely (not shown, not saved in shell history).
+The password is prompted securely (not shown, not saved in shell history). When a key is given (`--key` or `key_filename` in `configDevice.json`), public-key authentication is used instead and no password is asked; the key passphrase is prompted only if the key is encrypted.
 
 **Options:**
 
@@ -74,6 +80,9 @@ The password is prompted securely (not shown, not saved in shell history).
 |----------|-------------|
 | `username` | SSH username for the target host |
 | `--password PASSWORD` | Pass the password directly (for scripted/automated runs only) |
+| `--port PORT` | SSH port (default: `port` in `configDevice.json`, else `22`) |
+| `--key KEY` | Private key file for public-key auth (default: `key_filename` in `configDevice.json`) |
+| `--cert CERT` | OpenSSH certificate signed for that key, e.g. `~/.ssh/id_ed25519-cert.pub` (default: `certificate` in `configDevice.json`) |
 | `--out DIR` | Directory where reports are saved (default: `reports/`) |
 
 **Examples:**
@@ -81,6 +90,9 @@ The password is prompted securely (not shown, not saved in shell history).
 ```bash
 # Interactive — password prompted securely
 python tester-ssh.py ubuntu
+
+# Public key + OpenSSH certificate (servers allowing only publickey)
+python tester-ssh.py admin --port 2222 --key ~/.ssh/id_ed25519 --cert ~/.ssh/id_ed25519-cert.pub
 
 # Custom output directory
 python tester-ssh.py ubuntu --out /tmp/audit-results
@@ -108,7 +120,7 @@ After the audit completes, two files are written to the output directory:
 
 ```
 reports/
-├── audit_20260427_143201.md   ← Markdown table of all 142 checks
+├── audit_20260427_143201.md   ← Markdown table of all 134 checks
 └── audit_20260427_143201.pdf  ← Styled PDF with summary and color-coded results
 ```
 
@@ -139,7 +151,7 @@ The file names are timestamped so successive audits never overwrite each other.
 
 ## ANSSI Rules Covered
 
-The 142 checks span the following ANSSI white paper sections:
+The 134 checks span the following ANSSI white paper sections:
 
 | Domain | Rules |
 |--------|-------|
@@ -165,7 +177,7 @@ The 142 checks span the following ANSSI white paper sections:
 ```
 AUDIT-ANSSI/
 ├── tester-ssh.py              # Main entry point
-├── configDevice.json          # SSH target + 142 ANSSI audit rules
+├── configDevice.json          # SSH target + 134 ANSSI audit rules
 ├── log_conf.ini               # Logging configuration
 ├── requirements.txt
 ├── Colorer/
