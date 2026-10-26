@@ -7,6 +7,9 @@ from configuration.readConfiguration import readConfiguration
 
 logger = logging.getLogger()
 
+# Printed by a check that does not apply to the target (architecture, kernel version, ...)
+NOT_APPLICABLE = "not applicable"
+
 class device():
     def __init__(self, username, password, json=False, port=None, key_filename=None, certificate=None):
         self.remoteConfiguration = readConfiguration()
@@ -96,17 +99,23 @@ class device():
             expected = self.remoteConfiguration.getRule(commandIdx)
 
             result = self._sudoExec(cmd)
-            ok = result == expected
+            if result == NOT_APPLICABLE:
+                status = 'N/A'
+            else:
+                status = 'OK' if result == expected else 'KO'
 
-            if ok:
+            if status == 'OK':
                 logger.info(" %s <span style='color: green;'>OK</span>  ", desc)
+            elif status == 'N/A':
+                logger.info(" %s <span style='color: grey;'>N/A</span>  ", desc)
             else:
                 logger.error(" %s <span style='color: red;'>KO</span>  ", desc)
 
-            return {'name': name, 'description': desc, 'expected': expected, 'result': result, 'ok': ok}
+            return {'name': name, 'description': desc, 'expected': expected, 'result': result,
+                    'ok': status == 'OK', 'status': status}
         except Exception as e:
             logging.error("Command %d failed: %s", commandIdx, e)
-            return {'name': name, 'description': desc, 'expected': '', 'result': '', 'ok': False}
+            return {'name': name, 'description': desc, 'expected': '', 'result': '', 'ok': False, 'status': 'KO'}
 
     def check(self):
         try:

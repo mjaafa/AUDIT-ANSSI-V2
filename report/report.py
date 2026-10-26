@@ -14,14 +14,24 @@ def _parse_desc(raw):
     return title.strip(), label.strip(), rule
 
 
+def _status(r):
+    return r.get('status', 'OK' if r['ok'] else 'KO')
+
+
+def _counts(results):
+    """Return (passed, failed, not_applicable)."""
+    statuses = [_status(r) for r in results]
+    return statuses.count('OK'), statuses.count('KO'), statuses.count('N/A')
+
+
 def _group_by_title(results):
-    """Yield (title, [(index, name, label, rule, ok), ...]) keeping test order."""
+    """Yield (title, [(index, name, label, rule, status), ...]) keeping test order."""
     groups = []
     for i, r in enumerate(results, 1):
         title, label, rule = _parse_desc(r['description'])
         if not groups or groups[-1][0] != title:
             groups.append((title, []))
-        groups[-1][1].append((i, r.get('name', ''), label, rule, r['ok']))
+        groups[-1][1].append((i, r.get('name', ''), label, rule, _status(r)))
     return groups
 
 
@@ -81,14 +91,13 @@ def generate(results, hostname, out_dir="reports"):
 
 
 def _build_md(results, hostname, now):
-    passed = sum(1 for r in results if r['ok'])
-    failed = len(results) - passed
+    passed, failed, na = _counts(results)
     lines = [
         "# AUDIT ANSSI - Security Compliance Report",
         "",
         f"**Date:** {now.strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Host:** {hostname}  ",
-        f"**Total:** {len(results)} | **Passed:** {passed} | **Failed:** {failed}",
+        f"**Total:** {len(results)} | **Passed:** {passed} | **Failed:** {failed} | **N/A:** {na}",
         "",
         "---",
     ]
@@ -100,15 +109,13 @@ def _build_md(results, hostname, now):
             "| # | Rule | Test | Description | Status |",
             "|---|------|------|-------------|--------|",
         ]
-        for i, name, label, rule, ok in rows:
-            status = "OK" if ok else "KO"
+        for i, name, label, rule, status in rows:
             lines.append(f"| {i} | {rule} | {name} | {label} | {status} |")
     return "\n".join(lines) + "\n"
 
 
 def _build_pdf(results, hostname, now, out_path):
-    passed = sum(1 for r in results if r['ok'])
-    failed = len(results) - passed
+    passed, failed, na = _counts(results)
     generated_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
     pdf = _AuditPDF(hostname, generated_at)
@@ -118,7 +125,7 @@ def _build_pdf(results, hostname, now, out_path):
     # Summary line
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 8,
-             f"Summary: {len(results)} checks - {passed} passed, {failed} failed")
+             f"Summary: {len(results)} checks - {passed} passed, {failed} failed, {na} not applicable")
     pdf.ln(8)
     pdf.ln(3)
 
@@ -147,11 +154,11 @@ def _build_pdf(results, hostname, now, out_path):
 
         # Data rows
         pdf.set_font("Helvetica", "", 8)
-        for i, name, label, rule, ok in rows:
-            status = "OK" if ok else "KO"
-
-            if ok:
+        for i, name, label, rule, status in rows:
+            if status == "OK":
                 pdf.set_fill_color(232, 255, 232)
+            elif status == "N/A":
+                pdf.set_fill_color(240, 240, 240)
             else:
                 pdf.set_fill_color(255, 232, 232)
 
@@ -161,8 +168,10 @@ def _build_pdf(results, hostname, now, out_path):
             pdf.cell(COL[2], ROW_H, _fit(pdf, name, COL[2]), border=1, fill=True)
             pdf.cell(COL[3], ROW_H, _fit(pdf, label, COL[3]), border=1, fill=True)
 
-            if ok:
+            if status == "OK":
                 pdf.set_text_color(0, 130, 0)
+            elif status == "N/A":
+                pdf.set_text_color(110, 110, 110)
             else:
                 pdf.set_text_color(180, 0, 0)
             pdf.cell(COL[4], ROW_H, status, border=1, fill=True, align="C")

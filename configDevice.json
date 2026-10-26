@@ -12,9 +12,9 @@
             ],
             "configuration":[
                 {
-                    "hostname"  :"127.0.0.1",
-                    "username"  :"mgdp",
-                    "password"  :"mgdp@mgdp",
+                    "hostname"  :"10.7.135.86",
+                    "username"  :"mgd",
+                    "password"  :"mgd",
                     "port"      :"22"
                 }
             ],
@@ -70,7 +70,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.dmesg_restrict",
+                    "command":"k=kernel.dmesg_restrict; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]dmesg_restrict[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.dmesg_restrict = 1\"; fi;",
                     "Name":"kernel.dmesg_restrict",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.1 |",
                     "rule":"kernel.dmesg_restrict = 1",
@@ -78,7 +78,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.kptr_restrict",
+                    "command":"k=kernel.kptr_restrict; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]kptr_restrict[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"2\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.kptr_restrict = 2\"; fi;",
                     "Name":"kernel.kptr_restrict",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.2 |",
                     "rule":"kernel.kptr_restrict = 2",
@@ -86,15 +86,15 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.pid_max",
+                    "command":"k=kernel.pid_max; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]pid_max[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); if [ -z \"$p\" ]; then echo \"$k = $v (not set explicitly)\"; elif [ \"$p\" != \"$v\" ]; then echo \"$k = $v (configured $p)\"; else echo \"kernel.pid_max explicitly set\"; fi;",
                     "Name":"kernel.pid_max",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.3 |",
-                    "rule":"kernel.pid_max = 65536",
+                    "rule":"kernel.pid_max explicitly set",
                     "dialog":"No",
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.perf_cpu_time_max_percent",
+                    "command":"k=kernel.perf_cpu_time_max_percent; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]perf_cpu_time_max_percent[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.perf_cpu_time_max_percent = 1\"; fi;",
                     "Name":"kernel.perf_cpu_time_max_percent",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.4 |",
                     "rule":"kernel.perf_cpu_time_max_percent = 1",
@@ -102,7 +102,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.perf_event_max_sample_rate",
+                    "command":"k=kernel.perf_event_max_sample_rate; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]perf_event_max_sample_rate[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.perf_event_max_sample_rate = 1\"; fi;",
                     "Name":"kernel.perf_event_max_sample_rate",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.5 |",
                     "rule":"kernel.perf_event_max_sample_rate = 1",
@@ -110,15 +110,15 @@
                     "Store":"info"
                 },                
                 {
-                    "command":"sysctl kernel.perf_event_paranoid",
+                    "command":"k=kernel.perf_event_paranoid; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]perf_event_paranoid[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" -ge 2 ] 2>/dev/null; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.perf_event_paranoid >= 2\"; fi;",
                     "Name":"kernel.perf_event_paranoid",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.6 |",
-                    "rule":"kernel.perf_event_paranoid = 2",
+                    "rule":"kernel.perf_event_paranoid >= 2",
                     "dialog":"No",
                     "Store":"info"
                 },                
                 {
-                    "command":"sysctl kernel.randomize_va_space",
+                    "command":"k=kernel.randomize_va_space; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]randomize_va_space[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"2\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.randomize_va_space = 2\"; fi;",
                     "Name":"kernel.randomize_va_space",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.7 |",
                     "rule":"kernel.randomize_va_space = 2",
@@ -126,7 +126,7 @@
                     "Store":"info"
                 }, 
                 {
-                    "command":"sysctl kernel.sysrq",
+                    "command":"k=kernel.sysrq; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]sysrq[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"0\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.sysrq = 0\"; fi;",
                     "Name":"kernel.sysrq",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.8 |",
                     "rule":"kernel.sysrq = 0",
@@ -134,7 +134,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.unprivileged_bpf_disabled",
+                    "command":"k=kernel.unprivileged_bpf_disabled; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]unprivileged_bpf_disabled[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.unprivileged_bpf_disabled = 1\"; fi;",
                     "Name":"kernel.unprivileged_bpf_disabled",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.9 |",
                     "rule":"kernel.unprivileged_bpf_disabled = 1",
@@ -142,7 +142,7 @@
                     "Store":"info"
                 },  
                 {
-                    "command":"sysctl kernel.panic_on_oops",
+                    "command":"k=kernel.panic_on_oops; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]panic_on_oops[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.panic_on_oops = 1\"; fi;",
                     "Name":"kernel.panic_on_oops",
                     "Description": " recommended kernel configuration : configuration du noyau recommandées | ANSII R9.10 |",
                     "rule":"kernel.panic_on_oops = 1",
@@ -166,10 +166,10 @@
                     "Store":"info"
                 },
                 {
-                    "command":"sysctl kernel.yama.ptrace_scope",
+                    "command":"v=$(sysctl -n kernel.yama.ptrace_scope); if [ \"$v\" -ge 1 ] 2>/dev/null; then echo \"kernel.yama.ptrace_scope >= 1\"; else echo \"kernel.yama.ptrace_scope = $v\"; fi;",
                     "Name":"kernel.yama.ptrace_scope",
                     "Description": " recommended kernel configuration : Activer et configurer le LSM Yama | ANSII R11.2 |",
-                    "rule":"kernel.yama.ptrace_scope = 1",
+                    "rule":"kernel.yama.ptrace_scope >= 1",
                     "dialog":"No",
                     "Store":"info"
                 },
@@ -510,7 +510,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_REFCOUNT_FULL=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 5.5 \"$kv\" | sort -V | head -n1)\" = \"5.5\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_REFCOUNT_FULL=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_REFCOUNT_FULL",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.13 |",
                     "rule":"found",
@@ -566,7 +566,7 @@
                     "Store":"info"
                 },
                 {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RETPOLINE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(MITIGATION_)?RETPOLINE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RETPOLINE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion de la mémoire | ANSII R15.20 |",
                     "rule":"found",
@@ -606,7 +606,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_CREDENTIALS=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 6.6 \"$kv\" | sort -V | head -n1)\" = \"6.6\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_CREDENTIALS=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_CREDENTIALS",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.1 |",
                     "rule":"found",
@@ -694,7 +694,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_NO_SANITY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 5.11 \"$kv\" | sort -V | head -n1)\" = \"5.11\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_NO_SANITY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_POISONING_NO_SANITY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.7 |",
                     "rule":"found",
@@ -702,7 +702,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_ZERO=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 5.11 \"$kv\" | sort -V | head -n1)\" = \"5.11\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_ZERO=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_POISONING_ZERO",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.8 |",
                     "rule":"found",
@@ -718,7 +718,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULES",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.1 |",
                     "rule":"found",
@@ -726,7 +726,7 @@
                     "Store":"info"
                 }, 
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MODULE_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MODULE_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_STRICT_MODULE_RWX",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.2 |",
                     "rule":"found",
@@ -734,7 +734,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.3 |",
                     "rule":"found",
@@ -742,7 +742,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_FORCE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_FORCE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_FORCE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.4 |",
                     "rule":"found",
@@ -750,7 +750,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_ALL=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_ALL=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_ALL",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.5 |",
                     "rule":"found",
@@ -758,7 +758,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_SHA512=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_SHA512=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_SHA512",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.6 |",
                     "rule":"found",
@@ -766,7 +766,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_HASH=\"sha512\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_HASH=\"sha512\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_HASH",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.7 |",
                     "rule":"found",
@@ -774,7 +774,7 @@
                     "Store":"info"
                 },
              {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_KEY=\"certs/signing_key.pem\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_KEY=\"certs/signing_key.pem\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_KEY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.8 |",
                     "rule":"found",
@@ -894,7 +894,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_MODULES=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_MODULES",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.5 |",
                     "rule":"found",
@@ -902,7 +902,7 @@
                     "Store":"info"
                 },  
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_HIGHMEM64G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_HIGHMEM64G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_HIGHMEM64G",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits| ANSII R24.1 |",
                     "rule":"found",
@@ -910,7 +910,7 @@
                     "Store":"info"
                 },    
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_PAE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_PAE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_X86_PAE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.2 |",
                     "rule":"found",
@@ -918,7 +918,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.3 |",
                     "rule":"found",
@@ -926,7 +926,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.4 |",
                     "rule":"found",
@@ -934,7 +934,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_64=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_64=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_X86_64",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.1 |",
                     "rule":"found",
@@ -942,7 +942,7 @@
                     "Store":"info"
                 },       
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.2 |",
                     "rule":"found",
@@ -950,7 +950,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.3 |",
                     "rule":"found",
@@ -958,7 +958,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_MEMORY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_MEMORY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_MEMORY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.4 |",
                     "rule":"found",
@@ -966,7 +966,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_TABLE_ISOLATION=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(MITIGATION_)?PAGE_TABLE_ISOLATION=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_TABLE_ISOLATION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.5 |",
                     "rule":"found",
@@ -974,7 +974,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_IA32_EMULATION=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_IA32_EMULATION=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_IA32_EMULATION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.6 |",
                     "rule":"found",
@@ -982,7 +982,7 @@
                     "Store":"info"
                 },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_MODIFY_LDT_SYSCALL=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
+                    "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_MODIFY_LDT_SYSCALL=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_MODIFY_LDT_SYSCALL",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.7 |",
                     "rule":"found",
@@ -990,7 +990,7 @@
                     "Store":"info"
                 }, 
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.1 |",
                     "rule":"found",
@@ -998,7 +998,7 @@
                     "Store":"info"
                 }, 
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_VMSPLIT_3G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_VMSPLIT_3G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_VMSPLIT_3G",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.2 |",
                     "rule":"found",
@@ -1006,7 +1006,7 @@
                     "Store":"info"
                 }, 
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MEMORY_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MEMORY_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_STRICT_MEMORY_RWX",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.3 |",
                     "rule":"found",
@@ -1014,7 +1014,7 @@
                     "Store":"info"
                 }, 
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_CPU_SW_DOMAIN_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_CPU_SW_DOMAIN_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_CPU_SW_DOMAIN_PAN",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.4 |",
                     "rule":"found",
@@ -1022,7 +1022,7 @@
                     "Store":"info"
                 }, 
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_OABI_COMPAT=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
+                    "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_OABI_COMPAT=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_OABI_COMPAT",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.5 |",
                     "rule":"found",
@@ -1030,7 +1030,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.1 |",
                     "rule":"found",
@@ -1038,7 +1038,7 @@
                     "Store":"info"
                 },  
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.2 |",
                     "rule":"found",
@@ -1046,7 +1046,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_ARM64_SW_TTBR0_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_ARM64_SW_TTBR0_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_ARM64_SW_TTBR0_PAN",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.3 |",
                     "rule":"found",
@@ -1054,7 +1054,7 @@
                     "Store":"info"
                 },
             {
-                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_UNMAP_KERNEL_AT_EL0=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_UNMAP_KERNEL_AT_EL0=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_UNMAP_KERNEL_AT_EL0",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.4 |",
                     "rule":"found",
