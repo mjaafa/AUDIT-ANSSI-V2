@@ -19,9 +19,10 @@ def _status(r):
 
 
 def _counts(results):
-    """Return (passed, failed, not_applicable)."""
+    """Return (passed, failed, not_applicable, manual)."""
     statuses = [_status(r) for r in results]
-    return statuses.count('OK'), statuses.count('KO'), statuses.count('N/A')
+    return (statuses.count('OK'), statuses.count('KO'), statuses.count('N/A'),
+            statuses.count('MANUAL'))
 
 
 def _group_by_title(results):
@@ -29,6 +30,8 @@ def _group_by_title(results):
     groups = []
     for i, r in enumerate(results, 1):
         title, label, rule = _parse_desc(r['description'])
+        if r.get('comment'):
+            label = "%s (%s)" % (label, r['comment'])
         if not groups or groups[-1][0] != title:
             groups.append((title, []))
         groups[-1][1].append((i, r.get('name', ''), label, rule, _status(r)))
@@ -91,13 +94,13 @@ def generate(results, hostname, out_dir="reports"):
 
 
 def _build_md(results, hostname, now):
-    passed, failed, na = _counts(results)
+    passed, failed, na, manual = _counts(results)
     lines = [
         "# AUDIT ANSSI - Security Compliance Report",
         "",
         f"**Date:** {now.strftime('%Y-%m-%d %H:%M:%S')}  ",
         f"**Host:** {hostname}  ",
-        f"**Total:** {len(results)} | **Passed:** {passed} | **Failed:** {failed} | **N/A:** {na}",
+        f"**Total:** {len(results)} | **Passed:** {passed} | **Failed:** {failed} | **N/A:** {na} | **Manual:** {manual}",
         "",
         "---",
     ]
@@ -115,7 +118,7 @@ def _build_md(results, hostname, now):
 
 
 def _build_pdf(results, hostname, now, out_path):
-    passed, failed, na = _counts(results)
+    passed, failed, na, manual = _counts(results)
     generated_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
     pdf = _AuditPDF(hostname, generated_at)
@@ -125,7 +128,7 @@ def _build_pdf(results, hostname, now, out_path):
     # Summary line
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 8,
-             f"Summary: {len(results)} checks - {passed} passed, {failed} failed, {na} not applicable")
+             f"Summary: {len(results)} checks - {passed} passed, {failed} failed, {na} not applicable, {manual} manual")
     pdf.ln(8)
     pdf.ln(3)
 
@@ -159,6 +162,8 @@ def _build_pdf(results, hostname, now, out_path):
                 pdf.set_fill_color(232, 255, 232)
             elif status == "N/A":
                 pdf.set_fill_color(240, 240, 240)
+            elif status == "MANUAL":
+                pdf.set_fill_color(255, 244, 222)
             else:
                 pdf.set_fill_color(255, 232, 232)
 
@@ -172,6 +177,8 @@ def _build_pdf(results, hostname, now, out_path):
                 pdf.set_text_color(0, 130, 0)
             elif status == "N/A":
                 pdf.set_text_color(110, 110, 110)
+            elif status == "MANUAL":
+                pdf.set_text_color(170, 100, 0)
             else:
                 pdf.set_text_color(180, 0, 0)
             pdf.cell(COL[4], ROW_H, status, border=1, fill=True, align="C")

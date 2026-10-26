@@ -6,6 +6,7 @@ import getpass
 from connectivity.device import device
 from report.report import generate
 import datetime
+import sys
 
 fileConfig('log_conf.ini')
 logger = logging.getLogger()
@@ -23,6 +24,10 @@ parser.add_argument('--cert', type=str, default=None,
                     help='OpenSSH certificate (*-cert.pub) for the private key (default: "certificate" in configDevice.json)')
 parser.add_argument('--sudo-password', type=str, default=None,
                     help='sudo password on the target (default: SSH password; prompted when using a key)')
+parser.add_argument('--non-interactive', action='store_true',
+                    help='Do not ask the auditor for the manual recommendations (reported as MANUAL)')
+parser.add_argument('--answers', type=str, default='answers.json',
+                    help='File keeping the auditor answers to the manual recommendations (default: answers.json)')
 parser.add_argument('--out', type=str, default='reports',
                     help='Output directory for generated reports (default: reports/)')
 args = parser.parse_args()
@@ -35,6 +40,9 @@ if not project.key_filename:
 project.sudoPassword = args.sudo_password
 if project.key_filename and not project.sudoPassword:
     project.sudoPassword = getpass.getpass('sudo password (empty for NOPASSWD): ') or None
+
+project.interactive = not args.non_interactive and sys.stdin.isatty()
+project.loadAnswers(args.answers)
 
 project.connect()
 

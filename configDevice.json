@@ -18,38 +18,38 @@
                     "port"      :"22"
                 }
             ],
-            "numberOfCommands":"134",
+            "numberOfCommands":"228",
             "commands":[
+                {
+                    "command":"for f in sys_vendor product_name bios_version; do printf '%s: %s\\n' \"$f\" \"$(cat /sys/class/dmi/id/$f 2>/dev/null)\"; done; grep -m1 -iE 'model name|Hardware' /proc/cpuinfo; echo \"arch: $(uname -m)\";",
+                    "Name":"Hardware configuration (x86 hardware note)",
+                    "Description": " recommended kernel configuration : Choisir et configurer son matériel | ANSII R1 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
                 {
                     "command":"if [ -d /sys/firmware/efi ]; then echo \"using uefi\"; else echo \"using bios\"; fi;",
                     "Name":"UEFI boot mode",
-                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R1 |",
+                    "Description": " recommended kernel configuration : Configurer le BIOS/UEFI | ANSII R2 |",
                     "rule":"using uefi",
                     "dialog":"No",
                     "Store":"info"
                 },
                 {
-                    "_comment" : "SecureBoot enabled : if [ \"$(mokutil --sb-state)\" == \"SecureBoot enabled\" ]; then echo \"uefi secured\"; else echo \"uefi not secured\";fi;"  ,
+                    "_comment":"SecureBoot enabled : if [ \"$(mokutil --sb-state)\" == \"SecureBoot enabled\" ]; then echo \"uefi secured\"; else echo \"uefi not secured\";fi;",
                     "command":"sb=$(od -An -tu1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c 2>/dev/null | awk '{print $NF}'); if [ \"$sb\" = \"1\" ] || mokutil --sb-state 2>/dev/null | grep -q \"SecureBoot enabled\"; then echo \"uefi secured\"; else echo \"uefi not secured\"; fi;",
                     "Name":"Secure Boot enabled",
-                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R2 |",
+                    "Description": " recommended kernel configuration : Activer le démarrage sécurisé UEFI | ANSII R3 |",
                     "rule":"uefi secured",
                     "dialog":"No",
                     "Store":"info"
                 },
                 {
-                    "command":"if dmesg | grep -qi \"EFI v\"; then echo \"booted using uefi\"; else echo \"not booted using uefi\"; fi;",
-                    "Name":"Booted using UEFI",
-                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R3 |",
-                    "rule":"booted using uefi",
-                    "dialog":"No",
-                    "Store":"info"
-                },
-                {
-                    "command":"exp=$(mokutil --list-enrolled 2>/dev/null | sed -n 's/.*Not After *: *//p'); if [ -z \"$exp\" ]; then echo \"no enrolled keys found\"; else now=$(date +%s); ok=1; while read -r d; do [ \"$(date -d \"$d\" +%s 2>/dev/null || echo 0)\" -gt \"$now\" ] || ok=0; done <<< \"$exp\"; if [ $ok = 1 ]; then echo \"up to date keys\"; else echo \"outdated keys\"; fi; fi;",
-                    "Name":"Secure Boot keys validity",
-                    "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R4 |",
-                    "rule":"up to date keys",
+                    "command":"k=$( (mokutil --kek; mokutil --db) 2>/dev/null); if [ -z \"$k\" ]; then echo \"keys not readable\"; elif grep -qi microsoft <<< \"$k\"; then echo \"preloaded keys\"; else echo \"custom keys\"; fi;",
+                    "Name":"Preloaded Secure Boot keys replaced",
+                    "Description": " recommended kernel configuration : Remplacer les clés préchargées | ANSII R4 |",
+                    "rule":"custom keys",
                     "dialog":"No",
                     "Store":"info"
                 },
@@ -62,9 +62,105 @@
                     "Store":"info"
                 },
                 {
-                    "command":"if grep -qwE 'iommu=force|intel_iommu=on' /proc/cmdline; then echo \"found\"; else echo \"not found\"; fi;",
+                    "command":"sb=$(od -An -tu1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c 2>/dev/null | awk '{print $NF}'); if [ \"$sb\" = \"1\" ] && ls /sys/firmware/efi/efivars/StubInfo-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f >/dev/null 2>&1; then echo \"protected\"; else echo \"not protected\"; fi;",
+                    "Name":"Signed kernel cmdline and initramfs (UKI)",
+                    "Description": " recommended kernel configuration : Protéger les paramètres de ligne de commande du noyau et l'initramfs | ANSII R6 |",
+                    "rule":"protected",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'iommu=force'; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"IOMMU enabled",
                     "Description": " recommended kernel configuration : configuration uefi recommandées | ANSII R7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'l1tf=full,force'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline l1tf=full,force",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'page_poison=on'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline page_poison=on",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'pti=on'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline pti=on",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'slab_nomerge=yes'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline slab_nomerge=yes",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'slub_debug=FZP'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline slub_debug=FZP",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'spec_store_bypass_disable=seccomp'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline spec_store_bypass_disable=seccomp",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'spectre_v2=on'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline spectre_v2=on",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.7 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'mds=full,nosmt'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline mds=full,nosmt",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.8 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"case \"$(uname -m)\" in x86_64|i?86) ;; *) echo \"not applicable\"; exit 0;; esac; if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'mce=0'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline mce=0",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.9 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'page_alloc.shuffle=1'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline page_alloc.shuffle=1",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.10 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'rng_core.default_quality=500'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline rng_core.default_quality=500",
+                    "Description": " recommended kernel configuration : Paramétrer les options de configuration de la mémoire | ANSII R8.11 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
@@ -108,7 +204,7 @@
                     "rule":"kernel.perf_event_max_sample_rate = 1",
                     "dialog":"No",
                     "Store":"info"
-                },                
+                },
                 {
                     "command":"k=kernel.perf_event_paranoid; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]perf_event_paranoid[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" -ge 2 ] 2>/dev/null; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.perf_event_paranoid >= 2\"; fi;",
                     "Name":"kernel.perf_event_paranoid",
@@ -116,7 +212,7 @@
                     "rule":"kernel.perf_event_paranoid >= 2",
                     "dialog":"No",
                     "Store":"info"
-                },                
+                },
                 {
                     "command":"k=kernel.randomize_va_space; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]randomize_va_space[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"2\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.randomize_va_space = 2\"; fi;",
                     "Name":"kernel.randomize_va_space",
@@ -124,7 +220,7 @@
                     "rule":"kernel.randomize_va_space = 2",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"k=kernel.sysrq; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]sysrq[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"0\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.sysrq = 0\"; fi;",
                     "Name":"kernel.sysrq",
@@ -140,7 +236,7 @@
                     "rule":"kernel.unprivileged_bpf_disabled = 1",
                     "dialog":"No",
                     "Store":"info"
-                },  
+                },
                 {
                     "command":"k=kernel.panic_on_oops; v=$(sysctl -n $k 2>/dev/null); p=$((systemd-analyze cat-config sysctl.d 2>/dev/null || cat /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf /etc/sysctl.d/*.conf /etc/sysctl.conf 2>/dev/null) | sed -nE 's/^[[:space:]]*-?kernel[./]panic_on_oops[[:space:]]*=[[:space:]]*//p' | tail -n1 | tr -d '[:space:]'); [ -n \"$p\" ] || p=$(tr ' ' '\\n' < /proc/cmdline | sed -nE \"s/^sysctl\\.$(printf '%s' \"$k\" | sed 's/\\./[.\\/]/g')=//p\" | tail -n1); ok() { [ \"$1\" = \"1\" ]; }; if ! ok \"$v\"; then echo \"$k = $v\"; elif ! ok \"$p\"; then if [ -z \"$p\" ]; then echo \"$k = $v (not set in sysctl config or kernel cmdline)\"; else echo \"$k = $v (sysctl config sets $p)\"; fi; else echo \"kernel.panic_on_oops = 1\"; fi;",
                     "Name":"kernel.panic_on_oops",
@@ -173,7 +269,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-               {
+                {
                     "command":"sysctl net.core.bpf_jit_harden",
                     "Name":"net.core.bpf_jit_harden",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.1 |",
@@ -181,23 +277,23 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-               {
+                {
                     "command":"sysctl net.ipv4.ip_forward",
                     "Name":"net.ipv4.ip_forward",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.2 |",
                     "rule":"net.ipv4.ip_forward = 0",
                     "dialog":"No",
                     "Store":"info"
-                },  
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.accept_local",
                     "Name":"net.ipv4.conf.all.accept_local",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.3 |",
                     "rule":"net.ipv4.conf.all.accept_local = 0",
                     "dialog":"No",
                     "Store":"info"
-                },                                                                
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.accept_redirects",
                     "Name":"net.ipv4.conf.all.accept_redirects",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.4 |",
@@ -213,47 +309,47 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-               {
+                {
                     "command":"sysctl net.ipv4.conf.all.secure_redirects",
                     "Name":"net.ipv4.conf.all.secure_redirects",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.6 |",
                     "rule":"net.ipv4.conf.all.secure_redirects = 0",
                     "dialog":"No",
                     "Store":"info"
-                },  
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.default.secure_redirects",
                     "Name":"net.ipv4.conf.default.secure_redirects",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.7 |",
                     "rule":"net.ipv4.conf.default.secure_redirects = 0",
                     "dialog":"No",
                     "Store":"info"
-                },  
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.shared_media",
                     "Name":"net.ipv4.conf.all.shared_media",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.8 |",
                     "rule":"net.ipv4.conf.all.shared_media = 0",
                     "dialog":"No",
                     "Store":"info"
-                },                                                                                                                                                      
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.default.shared_media",
                     "Name":"net.ipv4.conf.default.shared_media",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.9 |",
                     "rule":"net.ipv4.conf.default.shared_media = 0",
                     "dialog":"No",
                     "Store":"info"
-                },  
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.accept_source_route",
                     "Name":"net.ipv4.conf.all.accept_source_route",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.10 |",
                     "rule":"net.ipv4.conf.all.accept_source_route = 0",
                     "dialog":"No",
                     "Store":"info"
-                },                                                                                                                                                      
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.default.accept_source_route",
                     "Name":"net.ipv4.conf.default.accept_source_route",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.11 |",
@@ -261,31 +357,31 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-              {
+                {
                     "command":"sysctl net.ipv4.conf.all.arp_filter",
                     "Name":"net.ipv4.conf.all.arp_filter",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.12 |",
                     "rule":"net.ipv4.conf.all.arp_filter = 1",
                     "dialog":"No",
                     "Store":"info"
-                },   
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.arp_ignore",
                     "Name":"net.ipv4.conf.all.arp_ignore",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.13 |",
                     "rule":"net.ipv4.conf.all.arp_ignore = 2",
                     "dialog":"No",
                     "Store":"info"
-                },    
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.route_localnet",
                     "Name":"net.ipv4.conf.all.route_localnet",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.14 |",
                     "rule":"net.ipv4.conf.all.route_localnet = 0",
                     "dialog":"No",
                     "Store":"info"
-                },  
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.all.drop_gratuitous_arp",
                     "Name":"net.ipv4.conf.all.drop_gratuitous_arp",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.15 |",
@@ -293,7 +389,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-               {
+                {
                     "command":"sysctl net.ipv4.conf.default.rp_filter",
                     "Name":"net.ipv4.conf.default.rp_filter",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.16 |",
@@ -301,15 +397,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-              {
+                {
                     "command":"sysctl net.ipv4.conf.all.rp_filter",
                     "Name":"net.ipv4.conf.all.rp_filter",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.17 |",
                     "rule":"net.ipv4.conf.all.rp_filter = 1",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-               {
+                },
+                {
                     "command":"sysctl net.ipv4.conf.default.send_redirects",
                     "Name":"net.ipv4.conf.default.send_redirects",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.18 |",
@@ -317,39 +413,39 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-              {
+                {
                     "command":"sysctl net.ipv4.conf.all.send_redirects",
                     "Name":"net.ipv4.conf.all.send_redirects",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.19 |",
                     "rule":"net.ipv4.conf.all.send_redirects = 0",
                     "dialog":"No",
                     "Store":"info"
-                },     
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.icmp_ignore_bogus_error_responses",
                     "Name":"net.ipv4.icmp_ignore_bogus_error_responses",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.20 |",
                     "rule":"net.ipv4.icmp_ignore_bogus_error_responses = 1",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.ip_local_port_range | tr -s '\\t' ' '",
                     "Name":"net.ipv4.ip_local_port_range",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.21 |",
                     "rule":"net.ipv4.ip_local_port_range = 32768 65535",
                     "dialog":"No",
                     "Store":"info"
-                },  
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.tcp_rfc1337",
                     "Name":"net.ipv4.tcp_rfc1337",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.22 |",
                     "rule":"net.ipv4.tcp_rfc1337 = 1",
                     "dialog":"No",
                     "Store":"info"
-                },  
-              {
+                },
+                {
                     "command":"sysctl net.ipv4.tcp_syncookies",
                     "Name":"net.ipv4.tcp_syncookies",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration du réseau IPv4 | ANSII R12.23 |",
@@ -357,7 +453,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-{
+                {
                     "command":"if [ ! -d /proc/sys/net/ipv6 ] || [ \"$(sysctl -n net.ipv6.conf.default.disable_ipv6)\" = \"1\" ]; then echo \"ipv6 disabled\"; else echo \"ipv6 enabled\"; fi;",
                     "Name":"net.ipv6.conf.default.disable_ipv6",
                     "Description": " recommended kernel configuration : Désactiver le plan IPv6 | ANSII R13.1 |",
@@ -365,7 +461,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-{
+                {
                     "command":"if [ ! -d /proc/sys/net/ipv6 ] || [ \"$(sysctl -n net.ipv6.conf.all.disable_ipv6)\" = \"1\" ]; then echo \"ipv6 disabled\"; else echo \"ipv6 enabled\"; fi;",
                     "Name":"net.ipv6.conf.all.disable_ipv6",
                     "Description": " recommended kernel configuration : Désactiver le plan IPv6 | ANSII R13.2 |",
@@ -373,15 +469,23 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-		{
+                {
+                    "command":"if tr ' ' '\\n' < /proc/cmdline | grep -qxF 'ipv6.disable=1'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"cmdline ipv6.disable=1",
+                    "Description": " recommended kernel configuration : Désactiver le plan IPv6 | ANSII R13.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
                     "command":"sysctl fs.suid_dumpable",
                     "Name":"fs.suid_dumpable",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes des fichiers | ANSII R14.1 |",
                     "rule":"fs.suid_dumpable = 0",
                     "dialog":"No",
                     "Store":"info"
-                },               
-		{
+                },
+                {
                     "command":"sysctl fs.protected_fifos",
                     "Name":"fs.protected_fifos",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes de fichiers | ANSII R14.2 |",
@@ -389,7 +493,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-		{
+                {
                     "command":"sysctl fs.protected_regular",
                     "Name":"fs.protected_regular",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes de fichiers | ANSII R14.3 |",
@@ -397,14 +501,14 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-		{
+                {
                     "command":"sysctl fs.protected_symlinks",
                     "Name":"fs.protected_symlinks",
                     "Description": " recommended kernel configuration : Paramétrer les options de configuration des systèmes de fichiers | ANSII R14.4 |",
                     "rule":"fs.protected_symlinks = 1",
                     "dialog":"No",
                     "Store":"info"
-                },                                
+                },
                 {
                     "command":"sysctl fs.protected_hardlinks",
                     "Name":"fs.protected_hardlinks",
@@ -420,7 +524,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_ARCH_OPTIONAL_KERNEL_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_ARCH_OPTIONAL_KERNEL_RWX",
@@ -428,7 +532,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_ARCH_HAS_STRICT_KERNEL_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_ARCH_HAS_STRICT_KERNEL_RWX",
@@ -436,7 +540,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                      
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_WX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_WX",
@@ -444,7 +548,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_DEBUG_FS=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_DEBUG_FS",
@@ -460,7 +564,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_STACKPROTECTOR_STRONG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_STACKPROTECTOR_STRONG",
@@ -468,7 +572,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                                                
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_DEVMEM=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_DEVMEM",
@@ -476,7 +580,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SCHED_STACK_END_CHECK=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SCHED_STACK_END_CHECK",
@@ -484,7 +588,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_HARDENED_USERCOPY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_HARDENED_USERCOPY",
@@ -500,7 +604,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_VMAP_STACK=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_VMAP_STACK",
@@ -516,7 +620,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                                                                                                                             
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_FORTIFY_SOURCE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_FORTIFY_SOURCE",
@@ -524,7 +628,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_ACPI_CUSTOM_METHOD=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_ACPI_CUSTOM_METHOD",
@@ -548,7 +652,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_COMPAT_VDSO=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_COMPAT_VDSO",
@@ -556,7 +660,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SECURITY_DMESG_RESTRICT=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SECURITY_DMESG_RESTRICT",
@@ -580,7 +684,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_LEGACY_VSYSCALL_EMULATE=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_LEGACY_VSYSCALL_EMULATE",
@@ -596,7 +700,7 @@
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
+                },
                 {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_X86_VSYSCALL_EMULATION=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_X86_VSYSCALL_EMULATION",
@@ -605,23 +709,23 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 6.6 \"$kv\" | sort -V | head -n1)\" = \"6.6\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_CREDENTIALS=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_CREDENTIALS",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_NOTIFIERS=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_NOTIFIERS",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.2 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },            
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_LIST=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_LIST",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.3 |",
@@ -629,7 +733,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEBUG_SG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEBUG_SG",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.4 |",
@@ -637,23 +741,23 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_BUG_ON_DATA_CORRUPTION=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_BUG_ON_DATA_CORRUPTION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les structures de données noyau | ANSII R16.5 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },   
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SLAB_FREELIST_RANDOM=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SLAB_FREELIST_RANDOM",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SLUB=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SLUB",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.2 |",
@@ -661,7 +765,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SLAB_FREELIST_HARDENED=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SLAB_FREELIST_HARDENED",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.3 |",
@@ -669,7 +773,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_SLAB_MERGE_DEFAULT=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_SLAB_MERGE_DEFAULT",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.4 |",
@@ -677,7 +781,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SLUB_DEBUG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SLUB_DEBUG",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire  | ANSII R17.5 |",
@@ -685,7 +789,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_POISONING",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.6 |",
@@ -693,7 +797,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 5.11 \"$kv\" | sort -V | head -n1)\" = \"5.11\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_NO_SANITY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_POISONING_NO_SANITY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.7 |",
@@ -701,7 +805,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"kv=$(uname -r | cut -d- -f1); if [ \"$(printf '%s\\n' 5.11 \"$kv\" | sort -V | head -n1)\" = \"5.11\" ]; then echo \"not applicable\"; exit 0; fi; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PAGE_POISONING_ZERO=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_POISONING_ZERO",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.8 |",
@@ -709,7 +813,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_COMPAT_BRK=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_COMPAT_BRK",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour l'allocateur mémoire | ANSII R17.9 |",
@@ -717,15 +821,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULES",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MODULE_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_STRICT_MODULE_RWX",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.2 |",
@@ -733,7 +837,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.3 |",
@@ -741,7 +845,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_FORCE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_FORCE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.4 |",
@@ -749,7 +853,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_ALL=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_ALL",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.5 |",
@@ -757,7 +861,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_SHA512=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_SHA512",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.6 |",
@@ -765,7 +869,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_HASH=\"sha512\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_HASH",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.7 |",
@@ -773,7 +877,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if ! grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxF 'CONFIG_MODULE_SIG_KEY=\"certs/signing_key.pem\"' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_MODULE_SIG_KEY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la gestion des modules noyau | ANSII R18.8 |",
@@ -781,15 +885,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_BUG=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_BUG",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PANIC_ON_OOPS=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PANIC_ON_OOPS",
                     "Description": "recommended kernel configuration :  Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.2 |",
@@ -797,7 +901,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_PANIC_TIMEOUT=-1' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PANIC_TIMEOUT",
                     "Description": "recommended kernel configuration :  Paramétrer les options de compilation pour les évènements anormaux | ANSII R19.3 |",
@@ -805,7 +909,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SECCOMP=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SECCOMP",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau| ANSII R20.1 |",
@@ -813,7 +917,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SECCOMP_FILTER=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SECCOMP_FILTER",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.2 |",
@@ -821,7 +925,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SECURITY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SECURITY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.3 |",
@@ -829,7 +933,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SECURITY_YAMA=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SECURITY_YAMA",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.4 |",
@@ -837,23 +941,71 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-             {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_SECURITY_WRITABLE_HOOKS=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_SECURITY_WRITABLE_HOOKS",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour les primitives de sécurité du noyau | ANSII R20.5 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-             {
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_CC_IS_CLANG=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGINS)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGINS",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_CC_IS_CLANG=y' <<< \"$c\"; then echo \"not applicable\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGIN_LATENT_ENTROPY)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGIN_LATENT_ENTROPY",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGIN_STACKLEAK|KSTACK_ERASE)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGIN_STACKLEAK",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGIN_STRUCTLEAK|INIT_STACK_ALL_ZERO|INIT_STACK_ALL_PATTERN)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGIN_STRUCTLEAK",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGIN_STRUCTLEAK_BYREF_ALL|INIT_STACK_ALL_ZERO|INIT_STACK_ALL_PATTERN)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(GCC_PLUGIN_RANDSTRUCT|GCC_PLUGIN_RANDSTRUCT_PERFORMANCE|RANDSTRUCT_FULL|RANDSTRUCT_PERFORMANCE)=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"CONFIG_GCC_PLUGIN_RANDSTRUCT",
+                    "Description": " recommended kernel configuration : Paramétrer les options de compilation pour les plugins du compilateur | ANSII R21.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_IPV6=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_IPV6",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la pile réseau | ANSII R22.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-             {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_SYN_COOKIES=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_SYN_COOKIES",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour la pile réseau | ANSII R22.2 |",
@@ -861,15 +1013,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_KEXEC=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_KEXEC",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau| ANSII R23.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },    
-            {
+                },
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_HIBERNATION=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_HIBERNATION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.2 |",
@@ -877,7 +1029,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_BINFMT_MISC=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_BINFMT_MISC",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.3 |",
@@ -885,7 +1037,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_LEGACY_PTYS=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_LEGACY_PTYS",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.4 |",
@@ -893,23 +1045,23 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_MODULES=y' <<< \"$c\"; then echo \"not applicable\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_MODULES",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation pour divers comportements du noyau | ANSII R23.5 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_HIGHMEM64G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_HIGHMEM64G",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits| ANSII R24.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },    
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_PAE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_X86_PAE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.2 |",
@@ -917,7 +1069,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.3 |",
@@ -925,7 +1077,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in i?86) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures 32 bits | ANSII R24.4 |",
@@ -933,15 +1085,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_X86_64=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_X86_64",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },       
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=65536' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.2 |",
@@ -949,7 +1101,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.3 |",
@@ -957,7 +1109,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_MEMORY=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_MEMORY",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits| ANSII R25.4 |",
@@ -965,7 +1117,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxE 'CONFIG_(MITIGATION_)?PAGE_TABLE_ISOLATION=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_PAGE_TABLE_ISOLATION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.5 |",
@@ -973,55 +1125,55 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_IA32_EMULATION=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_IA32_EMULATION",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.6 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in x86_64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_MODIFY_LDT_SYSCALL=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_MODIFY_LDT_SYSCALL",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures x86_64 bits | ANSII R25.7 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_VMSPLIT_3G=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_VMSPLIT_3G",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.2 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_STRICT_MEMORY_RWX=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_STRICT_MEMORY_RWX",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.3 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_CPU_SW_DOMAIN_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_CPU_SW_DOMAIN_PAN",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.4 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                }, 
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in armv*) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qE '^CONFIG_OABI_COMPAT=(y|m)$' <<< \"$c\"; then echo \"not found\"; else echo \"found\"; fi;",
                     "Name":"CONFIG_OABI_COMPAT",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM | ANSII R26.5 |",
@@ -1029,15 +1181,15 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_DEFAULT_MMAP_MIN_ADDR=32768' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_DEFAULT_MMAP_MIN_ADDR",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.1 |",
                     "rule":"found",
                     "dialog":"No",
                     "Store":"info"
-                },  
-            {
+                },
+                {
                     "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_RANDOMIZE_BASE=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_RANDOMIZE_BASE",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.2 |",
@@ -1045,7 +1197,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_ARM64_SW_TTBR0_PAN=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_ARM64_SW_TTBR0_PAN",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.3 |",
@@ -1053,7 +1205,7 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-            {
+                {
                     "command":"case \"$(uname -m)\" in aarch64|arm64) ;; *) echo \"not applicable\"; exit 0;; esac; f=/boot/config-$(uname -r); if [ -r \"$f\" ]; then c=$(cat \"$f\"); elif [ -r /proc/config.gz ]; then c=$(zcat /proc/config.gz); else echo \"kernel config not available\"; exit 0; fi; if grep -qxF 'CONFIG_UNMAP_KERNEL_AT_EL0=y' <<< \"$c\"; then echo \"found\"; else echo \"not found\"; fi;",
                     "Name":"CONFIG_UNMAP_KERNEL_AT_EL0",
                     "Description": "recommended kernel configuration : Paramétrer les options de compilation spécifiques aux architectures ARM 64 bits | ANSII R27.4 |",
@@ -1061,40 +1213,639 @@
                     "dialog":"No",
                     "Store":"info"
                 },
-                
                 {
-                    "command":"if [ ! -d /etc/apt ]; then echo \"no apt configuration\"; elif grep -rqsiE 'trusted=yes|allow-insecure=yes|AllowUnauthenticated|AllowInsecureRepositories' /etc/apt/; then echo \"vulnerable\"; else echo \"robust\"; fi;",
-                    "Name":"APT trusted repositories",
-                    "Description": "recommended kernel configuration : Utiliser des dépôts de paquets de confiance | ANSII R59 |",
+                    "command":"m=/boot; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then o=$(awk -v m=\"$m\" '$1 !~ /^#/ && $2==m {print $4}' /etc/fstab 2>/dev/null | tail -n1); case \",$o,\" in *,noauto,*) ;; *) echo \"not a separate mount\"; exit 0;; esac; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /boot",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.1 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/opt; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /opt",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.2 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/tmp; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /tmp",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.3 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/srv; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /srv",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.4 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/home; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /home",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.5 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/usr; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nodev; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /usr",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.6 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/var; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /var",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.7 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/var/log; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /var/log",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.8 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"m=/var/tmp; if [ ! -d \"$m\" ]; then echo \"not applicable\"; exit 0; fi; o=$(awk -v m=\"$m\" '$2==m {o=$4} END {print o}' /proc/self/mounts); if [ -z \"$o\" ]; then echo \"not a separate mount\"; exit 0; fi; miss=\"\"; for r in nosuid nodev noexec; do case \",$o,\" in *\",$r,\"*) ;; *) miss=\"$miss $r\";; esac; done; if [ -z \"$miss\" ]; then echo \"compliant\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"Mount options /var/tmp",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.9 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"o=$(awk '$2==\"/proc\" {o=$4} END {print o}' /proc/self/mounts); case \",$o,\" in *,hidepid=invisible,*|*,hidepid=2,*) echo \"compliant\";; *) echo \"missing: hidepid=invisible\";; esac;",
+                    "Name":"Mount options /proc",
+                    "Description": " recommended disk partitioning : Partitionnement type | ANSII R28.10 |",
+                    "rule":"compliant",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -d /boot ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' /boot); if [ \"$2\" = 0 ] && [ $(( 0$1 & 077 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: /boot mode $1 uid $2\"; fi;",
+                    "Name":"/boot restricted to root",
+                    "Description": " recommended disk partitioning : Restreindre les accès au dossier /boot | ANSII R29 |",
                     "rule":"robust",
                     "dialog":"No",
                     "Store":"info"
                 },
                 {
+                    "command":"echo \"Accounts with a login shell:\"; awk -F: '$7 !~ /(nologin|false|sync|shutdown|halt)$/ {print \"  \"$1\" (uid \"$3\", \"$7\")\"}' /etc/passwd; if command -v lastlog >/dev/null; then echo \"No login for 90 days or never:\"; lastlog -b 90 2>/dev/null | awk 'NR>1 {print \"  \"$1}' | head -n 30; fi;",
+                    "Name":"Unused user accounts",
+                    "Description": " recommended users and accounts : Désactiver les comptes utilisateur inutilisés | ANSII R30 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -r /etc/shadow ]; then echo \"shadow not readable\"; exit 0; fi; l=$(awk -F: '$2==\"\" {print $1}' /etc/shadow | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"No empty passwords",
+                    "Description": " recommended users and accounts : Utiliser des mots de passe robustes | ANSII R31.1 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if grep -qsE '^[[:space:]]*password.*pam_(pwquality|passwdqc|cracklib)\\.so' /etc/pam.d/*; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"Password quality PAM module",
+                    "Description": " recommended users and accounts : Utiliser des mots de passe robustes | ANSII R31.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if { grep -qsE '^[[:space:]]*(readonly[[:space:]]+|export[[:space:]]+|declare[[:space:]]+-[a-z]+[[:space:]]+|typeset[[:space:]]+-[a-z]+[[:space:]]+)?TMOUT=0*[1-9]' /etc/profile /etc/profile.d/*.sh /etc/bash.bashrc /etc/bashrc || grep -qsE '^[[:space:]]*StopIdleSessionSec=[1-9]' /etc/systemd/logind.conf /etc/systemd/logind.conf.d/*.conf /usr/lib/systemd/logind.conf.d/*.conf; }; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"Idle session timeout",
+                    "Description": " recommended users and accounts : Expirer les sessions utilisateur locales | ANSII R32 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -r /etc/shadow ]; then echo \"shadow not readable\"; exit 0; fi; p=$(awk -F: '$1==\"root\" {print $2}' /etc/shadow); case \"$p\" in '!'*|'*'*) echo \"robust\";; *) echo \"vulnerable: root account enabled\";; esac;",
+                    "Name":"root account disabled",
+                    "Description": " recommended users and accounts : Assurer l'imputabilité des actions d'administration | ANSII R33.1 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"r=$(auditctl -l 2>/dev/null); if grep -E 'arch=b64' <<< \"$r\" | grep -qw execve && grep -E 'arch=b32' <<< \"$r\" | grep -qw execve; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"auditd logs every execve (b64 and b32)",
+                    "Description": " recommended users and accounts : Assurer l'imputabilité des actions d'administration | ANSII R33.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -r /etc/shadow ]; then echo \"shadow not readable\"; exit 0; fi; min=$(awk '$1==\"UID_MIN\" {print $2}' /etc/login.defs 2>/dev/null); l=$(awk -F: -v min=\"${min:-1000}\" 'NR==FNR {pw[$1]=$2; next} $3>0 && $3<min && $1!=\"sync\" && $1!=\"shutdown\" && $1!=\"halt\" && ($7 !~ /(nologin|false)$/ || pw[$1] ~ /^\\$/) {print $1}' /etc/shadow /etc/passwd | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Service accounts without shell",
+                    "Description": " recommended users and accounts : Désactiver les comptes de service | ANSII R34 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"l=$({ cut -d: -f3 /etc/passwd | sort | uniq -d | sed 's/^/uid:/'; cut -d: -f1 /etc/passwd | sort | uniq -d; ps -eo user=,comm= | awk '$1==\"nobody\" {print \"nobody:\"$2}' | sort -u; } | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Unique UIDs, GIDs and user names",
+                    "Description": " recommended users and accounts : Utiliser des comptes de service uniques et exclusifs | ANSII R35 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"u=$(cat /etc/profile /etc/profile.d/*.sh /etc/bash.bashrc 2>/dev/null | sed -nE 's/^[[:space:]]*umask[[:space:]]+([0-7]+).*/\\1/p' | tail -n1); [ -n \"$u\" ] || u=$(awk '$1==\"UMASK\" {print $2}' /etc/login.defs 2>/dev/null); if [ -n \"$u\" ] && [ $(( 0$u & 077 )) -eq 63 ]; then echo \"robust\"; else echo \"vulnerable: umask ${u:-unset}\"; fi;",
+                    "Name":"Shell UMASK 0077",
+                    "Description": " recommended users and accounts : Modifier la valeur par défaut de UMASK | ANSII R36.1 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v systemctl >/dev/null; then echo \"systemctl not found\"; exit 0; fi; allow=\"\"; l=$(for u in $(systemctl list-units --type=service --state=running --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -vE '^(sshd@|user@|user-runtime-dir@|getty@|serial-getty@)'); do case \" $allow \" in *\" $u \"*) continue;; esac; m=$(systemctl show -p UMask --value \"$u\" 2>/dev/null); if [ -n \"$m\" ] && [ $(( 0$m & 027 )) -ne 23 ]; then echo \"$u\"; fi; done | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Service UMask 0027 or stricter",
+                    "Description": " recommended users and accounts : Modifier la valeur par défaut de UMASK | ANSII R36.2 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"l=$(cat /sys/kernel/security/lsm 2>/dev/null); case \",$l,\" in *,apparmor,*|*,selinux,*) echo \"found\";; *) echo \"not found\";; esac;",
+                    "Name":"MAC LSM enabled (AppArmor/SELinux)",
+                    "Description": " recommended access control : Utiliser des fonctionnalités de contrôle d'accès obligatoire MAC | ANSII R37 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; set -- $(stat -L -c '%a %G' \"$(command -v sudo)\"); if [ \"$1\" = 4750 ] && [ \"$2\" != root ]; then echo \"robust\"; else echo \"vulnerable: sudo mode $1 group $2\"; fi;",
+                    "Name":"sudo restricted to a dedicated group",
+                    "Description": " recommended access control : Créer un groupe dédié à l'usage de sudo | ANSII R38 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'noexec' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults noexec",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'requiretty' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults requiretty",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'use_pty' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults use_pty",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'umask=0*77' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults umask=0077",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'ignore_dot' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults ignore_dot",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.5 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; d=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | sed -nE 's/^[[:space:]]*Defaults[[:space:]]+//p' | tr ', \\t' '\\n\\n\\n'); if grep -qxE 'env_reset' <<< \"$d\"; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"sudo Defaults env_reset",
+                    "Description": " recommended access control : Modifier les directives de configuration sudo | ANSII R39.6 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"echo \"sudo rules (check the target user in parentheses):\"; cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -vE '^[[:space:]]*(#|$|Defaults|@include)' | head -n 40;",
+                    "Name":"sudo non-privileged target users",
+                    "Description": " recommended access control : Utiliser des utilisateurs cibles non-privilégiés pour les commandes sudo | ANSII R40 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; if [ ! -r /etc/sudoers ]; then echo \"sudoers not readable\"; exit 0; fi; l=$({ cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -vE '^[[:space:]]*(#|$|Defaults|@include)' | grep -E 'EXEC:'; cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -E '^[[:space:]]*Defaults.*!noexec'; } | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"No EXEC: tag, noexec not disabled",
+                    "Description": " recommended access control : Limiter l'utilisation de commandes nécessitant la directive EXEC | ANSII R41 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; if [ ! -r /etc/sudoers ]; then echo \"sudoers not readable\"; exit 0; fi; if cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -vE '^[[:space:]]*(#|$|Defaults|@include)' | grep -q '!'; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Name":"No negation in sudo rules",
+                    "Description": " recommended access control : Bannir les négations dans les spécifications sudo | ANSII R42 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; if [ ! -r /etc/sudoers ]; then echo \"sudoers not readable\"; exit 0; fi; l=$(cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -vE '^[[:space:]]*(#|$|Defaults|@include)' | sed -E 's/\\([^)]*\\)//g' | grep -E '\\*|=[[:space:]]*([A-Z_]+:[[:space:]]*)*ALL[[:space:]]*(,|$)|,[[:space:]]*ALL[[:space:]]*(,|$)' | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"sudo rules without wildcard or ALL",
+                    "Description": " recommended access control : Préciser les arguments dans les spécifications sudo | ANSII R43 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sudo >/dev/null; then echo \"not applicable\"; exit 0; fi; if [ ! -r /etc/sudoers ]; then echo \"sudoers not readable\"; exit 0; fi; if cat /etc/sudoers /etc/sudoers.d/* 2>/dev/null | grep -vE '^[[:space:]]*(#|$|Defaults|@include)' | grep -qE '/(vi|vim|nvim|nano|emacs|ed|pico|joe|mcedit)([[:space:]]|,|$)'; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Name":"Editors only through sudoedit",
+                    "Description": " recommended access control : Éditer les fichiers de manière sécurisée avec sudo | ANSII R44 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qs apparmor /sys/kernel/security/lsm; then echo \"not applicable\"; exit 0; fi; p=/sys/kernel/security/apparmor/profiles; e=$(grep -c '(enforce)' \"$p\" 2>/dev/null); c=$(grep -c '(complain)' \"$p\" 2>/dev/null); if [ \"${e:-0}\" -eq 0 ]; then echo \"no enforced profile\"; elif [ \"${c:-0}\" -gt 0 ]; then echo \"$c profiles in complain mode\"; else echo \"enforced\"; fi;",
+                    "Name":"AppArmor profiles enforced",
+                    "Description": " recommended access control : Activer les profils de sécurité AppArmor | ANSII R45 |",
+                    "rule":"enforced",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qs selinux /sys/kernel/security/lsm; then echo \"not applicable\"; exit 0; fi; e=$(cat /sys/fs/selinux/enforce 2>/dev/null); t=$(sed -nE 's/^[[:space:]]*SELINUXTYPE=//p' /etc/selinux/config 2>/dev/null); if [ \"$e\" = 1 ] && { [ \"$t\" = targeted ] || [ \"$t\" = default ]; }; then echo \"enforced\"; else echo \"enforce=${e:-?} policy=${t:-?}\"; fi;",
+                    "Name":"SELinux enforcing, targeted policy",
+                    "Description": " recommended access control : Activer SELinux avec la politique targeted | ANSII R46 |",
+                    "rule":"enforced",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qs selinux /sys/kernel/security/lsm; then echo \"not applicable\"; exit 0; fi; u=$(semanage login -l 2>/dev/null | awk '$1==\"__default__\" {print $2}'); if [ \"$u\" = user_u ]; then echo \"confined\"; else echo \"default SELinux user ${u:-unknown}\"; fi;",
+                    "Name":"Interactive users confined (user_u)",
+                    "Description": " recommended access control : Confiner les utilisateurs interactifs non privilégiés | ANSII R47 |",
+                    "rule":"confined",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qs selinux /sys/kernel/security/lsm; then echo \"not applicable\"; exit 0; fi; b=$(getsebool -a 2>/dev/null); bad=\"\"; chk() { v=$(awk -v n=\"$1\" '$1==n {print $3}' <<< \"$b\"); [ -z \"$v\" ] || [ \"$v\" = \"$2\" ] || bad=\"$bad $1\"; }; chk allow_execheap off; chk selinuxuser_execheap off; chk allow_execmem off; chk deny_execmem on; chk allow_execstack off; chk selinuxuser_execstack off; chk secure_mode_insmod on; chk ssh_sysadm_login off; if [ -z \"$b\" ]; then echo \"getsebool not available\"; elif [ -z \"$bad\" ]; then echo \"robust\"; else echo \"vulnerable:$bad\"; fi;",
+                    "Name":"SELinux booleans",
+                    "Description": " recommended access control : Paramétrer les variables booléennes SELinux | ANSII R48 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qs selinux /sys/kernel/security/lsm; then echo \"not applicable\"; exit 0; fi; if command -v sealert >/dev/null || [ -e /usr/sbin/setroubleshootd ]; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Name":"No SELinux policy debug tools",
+                    "Description": " recommended access control : Désinstaller les outils de débogage de politique SELinux | ANSII R49 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/etc/shadow; if [ ! -e \"$f\" ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' \"$f\"); if [ \"$2\" = 0 ] && [ $(( 0$1 & 037 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: $f mode $1 uid $2\"; fi;",
+                    "Name":"/etc/shadow permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.1 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/etc/gshadow; if [ ! -e \"$f\" ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' \"$f\"); if [ \"$2\" = 0 ] && [ $(( 0$1 & 037 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: $f mode $1 uid $2\"; fi;",
+                    "Name":"/etc/gshadow permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.2 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/etc/passwd; if [ ! -e \"$f\" ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' \"$f\"); if [ \"$2\" = 0 ] && [ $(( 0$1 & 022 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: $f mode $1 uid $2\"; fi;",
+                    "Name":"/etc/passwd permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.3 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/etc/group; if [ ! -e \"$f\" ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' \"$f\"); if [ \"$2\" = 0 ] && [ $(( 0$1 & 022 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: $f mode $1 uid $2\"; fi;",
+                    "Name":"/etc/group permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.4 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"f=/etc/sudoers; if [ ! -e \"$f\" ]; then echo \"not applicable\"; exit 0; fi; set -- $(stat -c '%a %u' \"$f\"); if [ \"$2\" = 0 ] && [ $(( 0$1 & 0337 )) -eq 0 ]; then echo \"robust\"; else echo \"vulnerable: $f mode $1 uid $2\"; fi;",
+                    "Name":"/etc/sudoers permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.5 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"k=$(ls /etc/ssh/ssh_host_*_key 2>/dev/null); if [ -z \"$k\" ]; then echo \"not applicable\"; exit 0; fi; bad=\"\"; for f in $k; do set -- $(stat -c '%a %u' \"$f\"); { [ \"$2\" = 0 ] && [ $(( 0$1 & 037 )) -eq 0 ]; } || bad=\"$bad $f\"; done; if [ -z \"$bad\" ]; then echo \"robust\"; else echo \"vulnerable:$bad\"; fi;",
+                    "Name":"SSH host private keys permissions",
+                    "Description": " recommended files and directories : Restreindre les droits d'accès aux fichiers et aux répertoires sensibles | ANSII R50.6 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"echo \"SSH host keys (a key shared by every device built from the same image must be regenerated):\"; for k in /etc/ssh/ssh_host_*_key.pub; do [ -e \"$k\" ] && echo \"  $(ssh-keygen -lf \"$k\" 2>/dev/null) created $(stat -c %y \"$k\" | cut -d. -f1)\"; done; echo \"machine-id: $(cat /etc/machine-id 2>/dev/null)\"; echo \"Accounts with a password, last change:\"; while IFS=: read -r u p d _; do case \"$p\" in '$'*) echo \"  $u $(date -d @$(( ${d:-0} * 86400 )) +%F 2>/dev/null)\";; esac; done < /etc/shadow;",
+                    "Name":"Default secrets changed",
+                    "Description": " recommended files and directories : Changer les secrets et droits d'accès dès l'installation | ANSII R51 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"l=$(find /tmp /var/tmp /dev/shm -maxdepth 1 \\( -type s -o -type p \\) -print 2>/dev/null | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"No socket/pipe in world-writable dirs",
+                    "Description": " recommended files and directories : Restreindre les accès aux sockets et aux pipes nommées | ANSII R52 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"mnts=$(awk '$3 ~ /^(ext[234]|xfs|btrfs|squashfs|f2fs|overlay|vfat)$/ {print $2}' /proc/self/mounts | sort -u); [ -n \"$mnts\" ] || mnts=/; l=$(find $mnts -xdev \\( -nouser -o -nogroup \\) -print 2>/dev/null | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"No file without known owner/group",
+                    "Description": " recommended files and directories : Éviter les fichiers ou répertoires sans utilisateur ou sans groupe connu | ANSII R53 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"mnts=$(awk '$3 ~ /^(ext[234]|xfs|btrfs|squashfs|f2fs|overlay|vfat)$/ {print $2}' /proc/self/mounts | sort -u); [ -n \"$mnts\" ] || mnts=/; l=$(find $mnts -xdev -type d -perm -0002 \\( ! -perm -1000 -o ! -user root \\) -print 2>/dev/null | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Sticky bit on world-writable directories",
+                    "Description": " recommended files and directories : Activer le sticky bit sur les répertoires inscriptibles | ANSII R54 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if grep -qsE '^[^#]*pam_(namespace|mktemp)\\.so' /etc/pam.d/*; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"Per-user temporary directories",
+                    "Description": " recommended files and directories : Séparer les répertoires temporaires des utilisateurs | ANSII R55 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"mnts=$(awk '$3 ~ /^(ext[234]|xfs|btrfs|squashfs|f2fs|overlay|vfat)$/ {print $2}' /proc/self/mounts | sort -u); [ -n \"$mnts\" ] || mnts=/; if command -v dpkg-query >/dev/null; then own() { dpkg-query -S \"$1\" >/dev/null 2>&1 || dpkg-query -S \"${1#/usr}\" >/dev/null 2>&1 || dpkg-query -S \"$(readlink -f \"$1\")\" >/dev/null 2>&1; }; elif command -v rpm >/dev/null; then own() { rpm -qf \"$1\" >/dev/null 2>&1; }; elif command -v opkg >/dev/null; then own() { [ -n \"$(opkg search \"$1\" 2>/dev/null)\" ]; }; else echo \"package database not available\"; exit 0; fi; l=$(find $mnts -xdev -type f -perm /6000 -print 2>/dev/null | while read -r f; do own \"$f\" || echo \"$f\"; done | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"setuid/setgid files not from a package",
+                    "Description": " recommended files and directories : Éviter l'usage d'exécutables avec les droits spéciaux setuid et setgid | ANSII R56 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"mnts=$(awk '$3 ~ /^(ext[234]|xfs|btrfs|squashfs|f2fs|overlay|vfat)$/ {print $2}' /proc/self/mounts | sort -u); [ -n \"$mnts\" ] || mnts=/; l=$(find $mnts -xdev -type f \\( \\( -perm -4000 -user root \\) -o \\( -perm -2000 -group root \\) \\) -print 2>/dev/null | grep -vE '/(sudo|su|passwd|unix_chkpwd)$' | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"setuid root / setgid root executables",
+                    "Description": " recommended files and directories : Éviter l'usage d'exécutables avec les droits spéciaux setuid root et setgid root | ANSII R57 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if command -v dpkg-query >/dev/null; then echo \"Installed packages: $(dpkg-query -W 2>/dev/null | wc -l)\"; l=$(dpkg-query -W -f='${Package}\\n' 2>/dev/null); elif command -v rpm >/dev/null; then echo \"Installed packages: $(rpm -qa | wc -l)\"; l=$(rpm -qa --qf '%{NAME}\\n'); elif command -v opkg >/dev/null; then echo \"Installed packages: $(opkg list-installed | wc -l)\"; l=$(opkg list-installed | cut -d' ' -f1); else echo \"no package database\"; exit 0; fi; echo \"Development, debug or desktop packages:\"; grep -iE '^(xserver|xorg|gnome|kde|xfce|gcc|g\\+\\+|make|gdb|strace|ltrace|tcpdump|telnet|valgrind)' <<< \"$l\" | head -n 30;",
+                    "Name":"Only required packages installed",
+                    "Description": " recommended package management : N'installer que les paquets strictement nécessaires | ANSII R58 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -d /etc/apt ]; then echo \"no apt configuration\"; elif grep -rqsiE 'trusted=yes|allow-insecure=yes|AllowUnauthenticated|AllowInsecureRepositories' /etc/apt/; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "Name":"APT trusted repositories",
+                    "Description": " recommended package management : Utiliser des dépôts de paquets de confiance | ANSII R59 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"echo \"Configured repositories:\"; grep -rhsE '^[[:space:]]*(deb |URIs:|baseurl|src/gz|src )' /etc/apt/sources.list /etc/apt/sources.list.d/ /etc/yum.repos.d/ /etc/opkg/ 2>/dev/null | head -n 30;",
+                    "Name":"Hardened package repositories",
+                    "Description": " recommended package management : Utiliser des dépôts de paquets durcis | ANSII R60 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
                     "command":"if [ -r /var/os-version ]; then d=$(grep Date /var/os-version | cut -d ':' -f2 | cut -d ' ' -f2); t=$(date -d \"$d\" +%s 2>/dev/null || echo 0); if [ $(( $(date +%s) - t )) -gt 2073700 ]; then echo \"vulnerable version needs update\"; else echo \"robust update\"; fi; elif command -v apt-get >/dev/null; then n=$(apt-get -s upgrade 2>/dev/null | grep -c '^Inst .*-security'); if [ \"$n\" -eq 0 ]; then echo \"robust update\"; else echo \"vulnerable version needs update\"; fi; else echo \"update status unknown\"; fi;",
                     "Name":"System up to date",
-                    "Description": "recommended kernel configuration : Effectuer des mises à jour régulières | ANSII R61 |",
+                    "Description": " recommended package management : Effectuer des mises à jour régulières | ANSII R61 |",
                     "rule":"robust update",
                     "dialog":"No",
                     "Store":"info"
-                },               
+                },
                 {
-                    "command":"if ! command -v systemctl >/dev/null; then echo \"systemctl not found\"; elif systemctl list-units --type=service,socket --state=active --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -qE 'rpc|nfs|portmap|statd|avahi|zeroconf|dhcp'; then echo \"vulnerable\"; else echo \"robust\"; fi;",
+                    "command":"if ! command -v systemctl >/dev/null; then echo \"systemctl not found\"; elif systemctl list-units --type=service,socket --state=active --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -qiE 'rpc|nfs|portmap|statd|avahi|zeroconf|dhcp|cups|hald|consolekit|polkit|display-manager|gdm|lightdm|sddm|xorg'; then echo \"vulnerable\"; else echo \"robust\"; fi;",
                     "Name":"Unneeded network services",
-                    "Description": "recommended kernel configuration : Désactiver les services non nécessaires | ANSII R62 |",
+                    "Description": " recommended services : Désactiver les services non nécessaires | ANSII R62 |",
                     "rule":"robust",
                     "dialog":"No",
                     "Store":"info"
-                },               
+                },
                 {
-                    "command":"r=$(grep -E 'pam_unix\\.so' /etc/pam.d/common-password 2>/dev/null | grep -w sha512 | grep -oE 'rounds=[0-9]+' | head -n1 | cut -d= -f2); if [ \"${r:-0}\" -ge 65536 ]; then echo \"robust\"; else echo \"vulnerable\"; fi;",
-                    "Name":"PAM sha512 rounds",
-                    "Description": "recommended kernel configuration : Désactiver les fonctionnalités des services non essentielles | ANSII R63 |",
+                    "command":"listen() { if command -v ss >/dev/null; then ss -Htulpn 2>/dev/null | awk '{print $1, $5, $7}'; else netstat -tulpn 2>/dev/null | awk '/^(tcp|udp)/ {print $1, $4, ($1 ~ /^tcp/ ? $7 : $6)}'; fi; }; command -v ss >/dev/null || command -v netstat >/dev/null || { echo \"no socket tool available (ss or netstat)\"; exit 0; }; echo \"Listening services (review their enabled features):\"; listen | awk '{p=$1; sub(/6$/, \"\", p); n=$3; sub(/^users:\\(\\(\"/, \"\", n); sub(/\".*/, \"\", n); sub(/^[0-9]+\\//, \"\", n); sub(/:.*/, \"\", n); port=$2; sub(/.*:/, \"\", port); if (p == \"udp\" && port+0 >= 32768) next; print p, $2, n}' | sort -u;",
+                    "Name":"Non-essential service features",
+                    "Description": " recommended services : Désactiver les fonctionnalités des services non essentielles | ANSII R63 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if command -v systemctl >/dev/null; then echo \"Services running as root:\"; for u in $(systemctl list-units --type=service --state=running --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -vE '^(sshd@|user@|user-runtime-dir@|getty@|serial-getty@)'); do s=$(systemctl show -p User --value \"$u\" 2>/dev/null); if [ -z \"$s\" ] || [ \"$s\" = root ]; then echo \"  $u\"; fi; done; else echo \"Processes running as root:\"; ps -eo user=,ppid=,pid=,comm= | awk '$1==\"root\" && $2!=2 && $3!=2 {print \"  \"$4}' | sort -u; fi; if command -v getcap >/dev/null; then echo \"Files with capabilities:\"; getcap -r /usr /bin /sbin /opt 2>/dev/null | sort | head -n 30; fi;",
+                    "Name":"Service privileges",
+                    "Description": " recommended services : Configurer les privilèges des services | ANSII R64 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v systemd-analyze >/dev/null; then echo \"systemd-analyze not available\"; exit 0; fi; l=$(systemd-analyze security --no-pager 2>/dev/null | awk '$(NF-1)==\"UNSAFE\" || $NF==\"UNSAFE\" {print $1}' | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Services sandboxed (no UNSAFE unit)",
+                    "Description": " recommended services : Cloisonner les services | ANSII R65 |",
                     "rule":"robust",
                     "dialog":"No",
                     "Store":"info"
-                }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
-             ]
+                },
+                {
+                    "command":"o=$(for t in docker podman lxc-start containerd runc crun virsh qemu-system-x86_64 qemu-system-aarch64; do command -v \"$t\" >/dev/null && echo \"installed: $t\"; done; systemctl list-units --type=service --state=running --no-legend --plain 2>/dev/null | grep -iE 'docker|containerd|podman|lxc|libvirt|qemu' | awk '{print \"running: \"$1}'); if [ -z \"$o\" ]; then echo \"not applicable\"; else echo \"$o\"; fi;",
+                    "Name":"Sandboxing components hardened",
+                    "Description": " recommended services : Durcir les composants de cloisonnement | ANSII R66 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qsE '^[^#]*pam_(ldap|sss)\\.so' /etc/pam.d/*; then echo \"not applicable\"; exit 0; fi; if grep -qsiE '^[[:space:]]*(ldap_uri[[:space:]]*=[[:space:]]*ldaps://|ldap_id_use_start_tls[[:space:]]*=[[:space:]]*true|ssl[[:space:]]+(on|start_tls)|uri[[:space:]]+ldaps://)' /etc/sssd/sssd.conf /etc/sssd/conf.d/*.conf /etc/nslcd.conf /etc/ldap.conf /etc/pam_ldap.conf; then echo \"robust\"; else echo \"vulnerable\"; fi;",
+                    "Name":"Remote PAM authentication over TLS",
+                    "Description": " recommended authentication : Sécuriser les authentifications distantes par PAM | ANSII R67 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"l=$(grep -shE '^[^#]*password.*pam_unix\\.so' /etc/pam.d/common-password /etc/pam.d/system-auth /etc/pam.d/password-auth | head -n1); if grep -qw yescrypt <<< \"$l\"; then echo \"robust\"; elif grep -qw sha512 <<< \"$l\" && [ \"$(grep -oE 'rounds=[0-9]+' <<< \"$l\" | cut -d= -f2)\" -ge 65536 ] 2>/dev/null; then echo \"robust\"; else echo \"vulnerable\"; fi;",
+                    "Name":"PAM sha512 rounds",
+                    "Description": " recommended authentication : Protéger les mots de passe stockés | ANSII R68.1 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ ! -r /etc/shadow ]; then echo \"shadow not readable\"; exit 0; fi; l=$(awk -F: '{h=$2; sub(/^!+/, \"\", h)} h == \"\" || h ~ /^\\*/ || h ~ /^\\$(y|gy|7)\\$/ {next} h ~ /^\\$6\\$rounds=[0-9]+\\$/ {split(h, a, /[=$]/); if (a[4] >= 65536) next} {print $1}' /etc/shadow | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Stored password hashes strong",
+                    "Description": " recommended authentication : Protéger les mots de passe stockés | ANSII R68.2 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! grep -qsE '^[[:space:]]*(passwd|group|shadow):.*[[:space:]](ldap|sss)([[:space:]]|$)' /etc/nsswitch.conf; then echo \"not applicable\"; exit 0; fi; if grep -qsiE '^[[:space:]]*(ldap_uri[[:space:]]*=[[:space:]]*ldaps://|ldap_id_use_start_tls[[:space:]]*=[[:space:]]*true|ssl[[:space:]]+(on|start_tls)|uri[[:space:]]+ldaps://)' /etc/sssd/sssd.conf /etc/sssd/conf.d/*.conf /etc/nslcd.conf /etc/ldap.conf; then echo \"robust\"; else echo \"vulnerable\"; fi;",
+                    "Name":"Remote user database over TLS",
+                    "Description": " recommended authentication : Sécuriser les accès aux bases utilisateur distantes | ANSII R69 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"o=$(grep -hsiE '^[[:space:]]*(binddn|rootbinddn|ldap_default_bind_dn|bind_dn)' /etc/nslcd.conf /etc/sssd/sssd.conf /etc/sssd/conf.d/*.conf /etc/ldap.conf /etc/libnss-ldap.conf); if [ -z \"$o\" ]; then echo \"not applicable\"; else echo \"$o\"; fi;",
+                    "Name":"Directory system/admin accounts separated",
+                    "Description": " recommended authentication : Séparer les comptes système et d'administrateur de l'annuaire | ANSII R70 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if { systemctl is-active -q systemd-journald 2>/dev/null || pgrep -x 'rsyslogd|syslog-ng|syslogd' >/dev/null; }; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"Logging service running",
+                    "Description": " recommended logging and integrity : Mettre en place un système de journalisation | ANSII R71 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"echo \"Log files and owners (rotated files excluded):\"; find /var/log -mindepth 1 -maxdepth 1 -printf '%M %u:%g %f\\n' 2>/dev/null | grep -vE '\\.[0-9]+(\\.gz)?$|\\.(old|gz)$' | sort; echo \"journald storage:\"; grep -hsE '^[[:space:]]*Storage=' /etc/systemd/journald.conf /etc/systemd/journald.conf.d/*.conf /usr/lib/systemd/journald.conf.d/*.conf || echo \"  default\";",
+                    "Name":"Dedicated service logs",
+                    "Description": " recommended logging and integrity : Mettre en place des journaux d'activité de service dédiés | ANSII R72 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"if pgrep -x auditd >/dev/null; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"auditd running",
+                    "Description": " recommended logging and integrity : Journaliser l'activité système avec auditd | ANSII R73.1 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if auditctl -l 2>/dev/null | grep -qE -- '^-w /etc/? -p [rwx]*w[rwx]*a'; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"auditd watches /etc",
+                    "Description": " recommended logging and integrity : Journaliser l'activité système avec auditd | ANSII R73.2 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"r=$(auditctl -l 2>/dev/null); if [ -z \"$r\" ]; then echo \"no audit rules\"; exit 0; fi; miss=\"\"; grep -qE -- '-w (/usr)?/s?bin/(insmod|modprobe|rmmod|kmod) -p [rwa]*x' <<< \"$r\" || miss=\"$miss kmod-exec\"; s=\"mount umount2 ptrace prctl unlink rmdir rename creat open openat truncate ftruncate init_module delete_module finit_module\"; case \"$(uname -m)\" in x86_64|i?86) s=\"$s ioperm modify_ldt\";; esac; for x in $s; do grep -qE -- \"-S ([a-z0-9_]+,)*$x(,|[[:space:]]|$)\" <<< \"$r\" || miss=\"$miss $x\"; done; grep -E 'openat' <<< \"$r\" | grep -q 'EACCES' || miss=\"$miss open-EACCES\"; if [ -z \"$miss\" ]; then echo \"found\"; else echo \"missing:$miss\"; fi;",
+                    "Name":"auditd rules of the ANSSI example",
+                    "Description": " recommended logging and integrity : Journaliser l'activité système avec auditd | ANSII R73.3 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if [ \"$(auditctl -s 2>/dev/null | awk '$1==\"enabled\" {print $2}')\" = 2 ]; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"auditd configuration immutable",
+                    "Description": " recommended logging and integrity : Journaliser l'activité système avec auditd | ANSII R73.4 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"listen() { if command -v ss >/dev/null; then ss -Htulpn 2>/dev/null | awk '{print $1, $5, $7}'; else netstat -tulpn 2>/dev/null | awk '/^(tcp|udp)/ {print $1, $4, ($1 ~ /^tcp/ ? $7 : $6)}'; fi; }; command -v ss >/dev/null || command -v netstat >/dev/null || { echo \"no socket tool available (ss or netstat)\"; exit 0; }; l=$(listen | awk '$1 ~ /^tcp/ {print $2}' | grep -E ':(25|465|587)$' | grep -vE '^(127\\.|\\[::1\\]|::1:|\\[::ffff:127\\.|::ffff:127\\.)' | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Mail service local only",
+                    "Description": " recommended logging and integrity : Durcir le service de messagerie locale | ANSII R74 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if ! command -v sendmail >/dev/null && [ ! -e /etc/aliases ]; then echo \"not applicable\"; exit 0; fi; if grep -qsE '^[[:space:]]*root[[:space:]]*:[[:space:]]*[^[:space:]]' /etc/aliases; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"Mail alias for root",
+                    "Description": " recommended logging and integrity : Configurer un alias de messagerie des comptes de service | ANSII R75 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if { { dmsetup table 2>/dev/null | grep -qw verity || grep -qE 'roothash=|systemd\\.verity|dm-mod\\.create=[^ ]*verity' /proc/cmdline; } || ls /var/lib/aide/aide.db* >/dev/null 2>&1 || [ -d /var/lib/tripwire ]; }; then echo \"found\"; else echo \"not found\"; fi;",
+                    "Name":"File integrity (dm-verity / AIDE)",
+                    "Description": " recommended logging and integrity : Sceller et vérifier l'intégrité des fichiers | ANSII R76 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"if { dmsetup table 2>/dev/null | grep -qw verity || grep -qE 'roothash=|systemd\\.verity|dm-mod\\.create=[^ ]*verity' /proc/cmdline; }; then echo \"found\"; exit 0; fi; db=$(ls /var/lib/aide/aide.db* 2>/dev/null | head -n1); if [ -z \"$db\" ]; then echo \"not found\"; exit 0; fi; m=$(df -P \"$db\" | awk 'NR==2 {print $6}'); if awk -v m=\"$m\" '$2==m {o=$4} END {exit !(o ~ /(^|,)ro(,|$)/)}' /proc/self/mounts; then echo \"found\"; else echo \"database on writable storage\"; fi;",
+                    "Name":"Integrity database protected",
+                    "Description": " recommended logging and integrity : Protéger la base de données des scellés | ANSII R77 |",
+                    "rule":"found",
+                    "dialog":"No",
+                    "Store":"info"
+                },
+                {
+                    "command":"listen() { if command -v ss >/dev/null; then ss -Htulpn 2>/dev/null | awk '{print $1, $5, $7}'; else netstat -tulpn 2>/dev/null | awk '/^(tcp|udp)/ {print $1, $4, ($1 ~ /^tcp/ ? $7 : $6)}'; fi; }; command -v ss >/dev/null || command -v netstat >/dev/null || { echo \"no socket tool available (ss or netstat)\"; exit 0; }; echo \"Listening services and the user they run as:\"; listen | grep -oE 'pid=[0-9]+|[[:space:]][0-9]+/' | tr -dc '0-9\\n' | sort -u | while read -r p; do printf '  %-12s %s\\n' \"$(ps -o user= -p \"$p\")\" \"$(ps -o comm= -p \"$p\")\"; done | sort -u;",
+                    "Name":"Network services partitioned",
+                    "Description": " recommended network services : Cloisonner les services réseau | ANSII R78 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"listen() { if command -v ss >/dev/null; then ss -Htulpn 2>/dev/null | awk '{print $1, $5, $7}'; else netstat -tulpn 2>/dev/null | awk '/^(tcp|udp)/ {print $1, $4, ($1 ~ /^tcp/ ? $7 : $6)}'; fi; }; command -v ss >/dev/null || command -v netstat >/dev/null || { echo \"no socket tool available (ss or netstat)\"; exit 0; }; echo \"Services listening on non-loopback addresses:\"; listen | awk '{p=$1; sub(/6$/, \"\", p); n=$3; sub(/^users:\\(\\(\"/, \"\", n); sub(/\".*/, \"\", n); sub(/^[0-9]+\\//, \"\", n); sub(/:.*/, \"\", n); port=$2; sub(/.*:/, \"\", port); if (p == \"udp\" && port+0 >= 32768) next; print p, $2, n}' | sort -u | awk '$2 !~ /^(127\\.|\\[::1\\]|::1:|\\[::ffff:127\\.|::ffff:127\\.)/ {print \"  \"$0}';",
+                    "Name":"Exposed services hardened and monitored",
+                    "Description": " recommended network services : Durcir et surveiller les services exposés | ANSII R79 |",
+                    "rule":"manual check",
+                    "dialog":"Yes",
+                    "Store":"info"
+                },
+                {
+                    "command":"listen() { if command -v ss >/dev/null; then ss -Htulpn 2>/dev/null | awk '{print $1, $5, $7}'; else netstat -tulpn 2>/dev/null | awk '/^(tcp|udp)/ {print $1, $4, ($1 ~ /^tcp/ ? $7 : $6)}'; fi; }; command -v ss >/dev/null || command -v netstat >/dev/null || { echo \"no socket tool available (ss or netstat)\"; exit 0; }; l=$(listen | awk '$2 !~ /^(127\\.|\\[::1\\]|::1:|\\[::ffff:127\\.|::ffff:127\\.)/ {print $2\"(\"$3\")\"}' | grep -vE '\"sshd\"|/sshd' | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Listening services besides sshd",
+                    "Description": " recommended network services : Réduire la surface d'attaque des services réseau | ANSII R80 |",
+                    "rule":"robust",
+                    "dialog":"No",
+                    "Store":"info"
+                }
+            ]
         }
     ]
 }

@@ -68,3 +68,7 @@ class readConfiguration():
 
     def getRule(self, index):
         return self._commands[index]['rule']
+
+    def getDialog(self, index):
+        # "Yes" marks a recommendation answered by the auditor from the command output
+        return self._commands[index].get('dialog', 'No') == 'Yes'
