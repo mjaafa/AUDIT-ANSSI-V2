@@ -12,9 +12,9 @@
             ],
             "configuration":[
                 {
-                    "hostname"  :"10.7.135.86",
-                    "username"  :"mgd",
-                    "password"  :"mgd",
+                    "hostname"  :"127.0.0.1",
+                    "username"  :"ubuntu",
+                    "password"  :"",
                     "port"      :"22"
                 }
             ],
@@ -1582,8 +1582,8 @@
                     "Store":"info"
                 },
                 {
-                    "command":"l=$(find /tmp /var/tmp /dev/shm -maxdepth 1 \\( -type s -o -type p \\) -print 2>/dev/null | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
-                    "Name":"No socket/pipe in world-writable dirs",
+                    "command":"reach() { d=$(dirname \"$1\"); while [ \"$d\" != / ]; do [ $(( 0$(stat -Lc %a \"$d\") & 01 )) -ne 0 ] || return 1; d=$(dirname \"$d\"); done; return 0; }; l=$( { awk 'NR>1 && $8 ~ /^\\// {print $8}' /proc/net/unix; find /run /tmp /var/tmp /dev/shm -xdev -type p 2>/dev/null; } | while read -r f; do readlink -f \"$f\"; done | sort -u | while read -r f; do [ -S \"$f\" ] && m=02 || m=06; [ -e \"$f\" ] && [ $(( 0$(stat -c %a \"$f\") & m )) -ne 0 ] || continue; case \"$f\" in /run/dbus/system_bus_socket|/run/systemd/*|/dev/log|/run/udev/control|/run/snapd.socket|/run/snapd-snap.socket|/run/cups/cups.sock|/run/avahi-daemon/socket|/run/acpid.socket|/run/uuidd/request|/tmp/.X11-unix/X[0-9]*|/tmp/.ICE-unix/[0-9]*|/dev/initctl|/var/spool/postfix/dev/log) continue;; esac; reach \"$f\" && echo \"$f($(stat -c '%a %U' \"$f\"))\"; done | head -n 15 | tr '\\n' ' '); if [ -z \"$l\" ]; then echo \"robust\"; else echo \"vulnerable: $l\"; fi;",
+                    "Name":"Sockets/pipes not open to other users",
                     "Description": " recommended files and directories : Restreindre les accès aux sockets et aux pipes nommées | ANSII R52 |",
                     "rule":"robust",
                     "dialog":"No",
