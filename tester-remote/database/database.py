@@ -14,13 +14,13 @@ class mongoDb():
             self.collection = self.database["CPE"]
 
         except Exception as e :
-            logger.error("Create database")
+            logging.error("Create database")
 
     def insertElement(self, database, element):
         try :
             self.collection.insert_one[element]
         except Exception as e :
-            logger.error("Insert element fails")
+            logging.error("Insert element fails")
 
 
 
