@@ -36,4 +36,11 @@ jobs:
         python -m pip install --upgrade anyio pytest
         whoami
         sudo ls
-        python3 tester-ssh.py ${whoami} --password "" --port 22 --out report-ubuntu.pdf 127.0.0.1
+        # The runner user has no password: audit localhost over SSH with a throwaway key
+        sudo apt-get install -y openssh-server
+        sudo systemctl start ssh
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ci -q
+        cat ~/.ssh/id_ci.pub >> ~/.ssh/authorized_keys
+        chmod 600 ~/.ssh/authorized_keys
+        python3 tester-ssh.py "$(whoami)" --key ~/.ssh/id_ci --port 22 --non-interactive --out report-ubuntu

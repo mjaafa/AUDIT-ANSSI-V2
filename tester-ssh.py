@@ -35,13 +35,16 @@ args = parser.parse_args()
 logger.debug("Configuration setup for device")
 project = device(args.username, args.password, False, port=args.port,
                  key_filename=args.key, certificate=args.cert)
+tty = sys.stdin.isatty()
 if not project.key_filename:
-    project.password = args.password or getpass.getpass('SSH password: ')
+    if args.password is None and not tty:
+        sys.exit("No terminal to prompt for the SSH password: pass --password or --key")
+    project.password = args.password if args.password is not None else getpass.getpass('SSH password: ')
 project.sudoPassword = args.sudo_password
-if project.key_filename and not project.sudoPassword:
+if project.key_filename and project.sudoPassword is None and tty:
     project.sudoPassword = getpass.getpass('sudo password (empty for NOPASSWD): ') or None
 
-project.interactive = not args.non_interactive and sys.stdin.isatty()
+project.interactive = not args.non_interactive and tty
 project.loadAnswers(args.answers)
 
 project.connect()
