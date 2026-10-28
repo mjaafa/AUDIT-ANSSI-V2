@@ -36,4 +36,4 @@ jobs:
         python -m pip install --upgrade anyio pytest
         whoami
         sudo ls
-        #python -m pytest tests/ -v
+        python3 tester-ssh.py ${whoami} --port 22 --out report-ubuntu.pdf 127.0.0.1
