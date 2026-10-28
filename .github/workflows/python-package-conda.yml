@@ -2,6 +2,9 @@ name: Python Package using Conda
 
 on: [push]
 
+permissions:
+  contents: write
+
 jobs:
   build-linux:
     runs-on: ubuntu-latest
@@ -44,3 +47,14 @@ jobs:
         cat ~/.ssh/id_ci.pub >> ~/.ssh/authorized_keys
         chmod 600 ~/.ssh/authorized_keys
         python3 tester-ssh.py "$(whoami)" --key ~/.ssh/id_ci --port 22 --non-interactive --out report-ubuntu
+    - name: Commit audit report
+      if: always()
+      run: |
+        if [ ! -d report-ubuntu ]; then echo "No report generated"; exit 0; fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -f report-ubuntu
+        if git diff --cached --quiet; then echo "No report changes"; exit 0; fi
+        git commit -m "[ ANSSI ] audit report ${GITHUB_SHA::7} [skip ci]"
+        git pull --rebase origin "${GITHUB_REF_NAME}"
+        git push origin "HEAD:${GITHUB_REF_NAME}"
