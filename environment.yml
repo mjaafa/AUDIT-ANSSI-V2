@@ -1,0 +1,15 @@
+name: audit-anssi
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  # legacy tester-remote/
+  - pexpect
+  # - pyjq  # needed only by tester-remote/configuration/readConfiguration.py
+  # dev / CI
+  - flake8
+  - pytest
+  - pip:
+      # runtime: paramiko, fpdf2, psycopg2-binary, pymongo
+      - -r requirements.txt
