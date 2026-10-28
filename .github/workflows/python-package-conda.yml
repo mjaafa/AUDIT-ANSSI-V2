@@ -30,9 +30,9 @@ jobs:
         #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda install pytest
         
+        python -m pytest --collect-only -v
         pip install -r requirements.txt
         whoami
         sudo ls
-        pytest
+        python -m pytest tests/ -v
