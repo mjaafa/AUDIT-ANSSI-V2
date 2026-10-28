@@ -1,5 +1,8 @@
 import psycopg2
+import logging
 from pymongo import MongoClient
+
+logger = logging.getLogger()
 
 class mongoDb():
     def __init__(self, configuration):
